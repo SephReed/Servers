@@ -1,41 +1,3 @@
-// const express = require('express')
-// const bodyParser = require('body-parser')
-// const app = express()
-
-// // app.use(bodyParser.urlencoded({
-// //     extended: true
-// // }));
-// app.use(bodyParser.json());
-
-
-
-
-
-// // app.get('/', function (req, res) {
-// //   res.send('Hello World!')
-// // })
-
-// app.use(function (req, res) {
-//   var post_data = req.body;
-//   console.log(post_data);
-// })
-
-// // app.post('*', function (req, res) {
-// // 	console.log(req.body)
-
-// // 	*bodyParser.json(options)
-// // 	 * Parses the text as JSON and exposes the resulting object on req.body.
-	 
-	
-// // })
-
-// app.listen(8528, function () {
-//   console.log('Example app listening!')
-// })
-
-
-
-
 const http = require('http');
 const url = require('url');
 const fs = require('fs');
@@ -56,7 +18,7 @@ var PKGS = {
 
 
 http.createServer(function (request, response) {
-	console.log(`${request.method} ${request.url}`);
+	
 
 	//REMOVING THIS LINE GIVES HACKERS ROOT ACCESS
 	// request.url = removeAnyLeadingSlashes(request.url)
@@ -137,6 +99,8 @@ http.createServer(function (request, response) {
         });
     }
     else if (request.method == 'GET'){
+    	console.log(`${request.method} ${request.url}`);
+
     	fs.exists(pathname, function (exist) {
 		    if(!exist) {
 		      // if the file is not found, return 404
@@ -292,11 +256,9 @@ function handlePOST(request, response, body, pathname) {
 		fs.readdirSync(pathname).forEach(file => {
 		  	
 			if(file.startsWith('.') == false || returnHiddenFiles) {
-
+					//
 			  	var addMe = {};
 			  	addMe.name = file;
-
-			  	console.log(file);
 
 			  	var thisItemFilePath = pathname;
 			  	if(pathname.length && pathname.endsWith('/') == false)
