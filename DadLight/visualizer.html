@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Dad Light Visualization/Debugger</title>
+		<link rel="stylesheet" type="text/css" href="controller.css">
+		<script type="text/javascript">
+
+		var lightVals;
+		var requestedFrame;
+		var FULL_BRIGHT_MAG = 256;
+
+		var ws = new WebSocket('ws://localhost:4444');
+		ws.binaryType = 'arraybuffer';
+
+
+		ws.addEventListener('message', function (event) {
+		    lightVals = new Uint8Array(event.data);
+
+			if(requestedFrame == undefined) {
+				requestedFrame = window.requestAnimationFrame(function() {
+					for(var i = 0; i < LIGHTS.length; i++) {
+						var val = lightVals[i]/FULL_BRIGHT_MAG;
+						val = Math.min(1, val).toFixed(2);
+
+						LIGHTS[i].style.opacity = val;
+					}
+					requestedFrame = undefined;
+				});
+			}
+		});
+
+
+		var LIGHTS = [];
+		document.addEventListener("DOMContentLoaded", function () {
+			for(var i = 0; i < 12; i++) {
+				LIGHTS[i] = document.createElement("light");
+				document.body.appendChild(LIGHTS[i]);
+			}
+		});
+		
+		
+	</script>
+</head>
+<body>
+<headerBar class="bg_visualizer">
+	<a href="index.html"><</a>
+	Visualizer
+</headerBar>
+The circles below should light up with the audio <br><small>(for testing purposes. keep open in a seperate tab)</small><br>
+
+
+
+</body>
+
+
+<style>
+body {
+	text-align: center;
+	color: white;
+}
+
+light {
+	position: relative;
+	display: inline-block;
+	padding: 8%;
+	background-color: orange;
+	transition: opacity 0.1s ease;
+	border-radius: 200px;
+	border: 1px solid #333;
+	box-shadow: inset 0px 0px 40px rgba(250, 250, 250, 0.8);
+}
+
+/*light::before {
+	content: " ";
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+	
+}*/
+
+@media all and (max-width: 800px) {
+	light {
+		padding: 12%;
+	}
+}
+
+@media all and (max-width: 600px) {
+	light {
+		padding: 16%;
+	}
+}
+
+@media all and (max-width: 400px) {
+	light {
+		padding: 24%;
+	}
+}
+
+</style>
+</html>

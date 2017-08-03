@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Dad Light Controller - Mic</title>
+	<link rel="stylesheet" type="text/css" href="controller.css">
+	<script type="text/javascript" src="js/createAudioSendNode.js"></script>
+	<script type="text/javascript" src="js/shortHand.js"></script>
+
+	<script type="text/javascript">
+
+				//
+		var audioCtx = new AudioContext();
+
+		var scriptNode = createAudioSendNode(audioCtx);
+		var currentStream;
+		// scriptNode.connect(masterGain);
+
+		function micOnOff() {
+
+			if(currentStream) {
+				currentStream.stop();
+				currentStream = undefined;
+				ID("record").classList.remove("isOn");
+			}
+			else {
+				navigator.mediaDevices.getUserMedia({ audio: true })
+				.then(function(mediaStream) {
+					currentStream = mediaStream;
+					var mediaStreamSource = audioCtx.createMediaStreamSource(mediaStream);
+		           	mediaStreamSource.connect(scriptNode);
+				})
+				.catch(function(err) { console.log(err.name + ": " + err.message); });
+
+				ID("record").classList.add("isOn");
+			}			
+		}
+
+		
+		
+	</script>
+</head>
+<body>
+<headerBar class="bg_mic">
+	<a href="index.html"><</a>
+	Mic
+</headerBar>
+<content>
+
+	<button id="record" class="big_button" onclick="micOnOff()">Mic On/Off</button>
+</content>
+
+
+</body>
+
+
+<style>
+
+
+</style>
+</html>

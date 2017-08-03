@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Dad Light Controller - Mic</title>
+	<link rel="stylesheet" type="text/css" href="../controller.css">
+	<script type="text/javascript" src="../js/shortHand.js"></script>
+	<script type="text/javascript" src="../js/serverCommunicator.js"></script>
+	<script type="text/javascript" src="../js/UI.js"></script>
+
+	<script type="text/javascript">
+		var SERVER_READY = false;
+
+
+		//------------ ON ------------------
+		var on = UI.add("on", false);
+		on.onValueChange(function(isOn) {
+			if(isOn)
+				on.domNode.classList.add("isOn");
+			else
+				on.domNode.classList.remove("isOn");
+
+			if(SERVER_READY) {
+				var pattern = isOn ? "chaos" : "solid";
+				SERVER.setSettings({"pattern": pattern});
+			}
+		});
+
+
+		//------------ FADE OUT ------------------
+		var fadeOut = UI.add("fadeOut", 2.5);
+		fadeOut.min = 0.5;
+		fadeOut.max = 5;
+		fadeOut.onDomNode(function(domNode) {
+			fadeOut.domNode.addEventListener("change", function(event) {
+				fadeOut.setFromRangeValue(fadeOut.domNode.value);
+			})
+		})
+		fadeOut.onValueChange(function(value) {
+			fadeOut.domNode.value = fadeOut.convertToRangeValue();
+			
+			if(SERVER_READY)
+				SERVER.setSettings("chaos", {"fadeOut" : value});
+		});
+
+
+
+		//------------ FADE IN ------------------
+		var fadeIn = UI.add("fadeIn", 2.5);
+		fadeIn.min = 0.5;
+		fadeIn.max = 5;
+		fadeIn.onDomNode(function(domNode) {
+			fadeIn.domNode.addEventListener("change", function(event) {
+				fadeIn.setFromRangeValue(fadeIn.domNode.value);
+			})
+		})
+		fadeIn.onValueChange(function(value) {
+			fadeIn.domNode.value = fadeIn.convertToRangeValue();
+			
+			if(SERVER_READY)
+				SERVER.setSettings("chaos", {"fadeIn" : value});
+		});
+
+
+
+		//------------ SPEED ------------------
+		var speed = UI.add("speed", 4);
+		speed.min = 2;
+		speed.max = 10;
+		speed.onDomNode(function(domNode) {
+			speed.domNode.addEventListener("change", function(event) {
+				console.log(event);
+				speed.setFromRangeValue(speed.domNode.value);
+			})
+		})
+		speed.onValueChange(function(value) {
+			speed.domNode.value = speed.convertToRangeValue();
+			
+			if(SERVER_READY)
+				SERVER.setSettings("chaos", {"speed" : value});
+		});
+
+
+
+		domReady(function() {
+			on.setDomNode(ID("onOff"));
+			fadeOut.setDomNode(ID("fadeOut"));
+			fadeIn.setDomNode(ID("fadeIn"));
+			speed.setDomNode(ID("speed"));
+		})
+
+
+
+
+		var serverSaid = false;
+		Promise.all([
+			SERVER.getSettings()
+			.then(function(newSettings) {
+				console.log(newSettings)
+				on.setValue(newSettings.pattern == "chaos");
+			}),
+
+			SERVER.getSettings("chaos")
+			.then(function(patternSettings) {
+				fadeOut.setValue(patternSettings.fadeOut);
+				fadeIn.setValue(patternSettings.fadeIn);
+				speed.setValue(patternSettings.speed);
+			})
+
+		]).then(function(){ SERVER_READY = true; })
+		
+
+
+		function onOff() {
+			on.setValue(!on.value);
+		}
+
+	
+
+	
+		
+		
+	</script>
+</head>
+<body>
+<headerBar class="bg_dice">
+	<a href="index.html"><</a>
+	Pattern - Cycle
+</headerBar>
+<content>
+
+	<button id="onOff" class="big_button" onclick="onOff()">On/Off</button>
+	<hr>
+	<h1>Fade Out Time</h1>
+	<input id="fadeOut" type="range">
+	<hr>
+	<h1>Fade In Time</h1>
+	<input id="fadeIn" type="range">
+	<hr>
+	<h1>Speed</h1>
+	<input id="speed" type="range">
+</content>
+
+
+</body>
+
+
+<style>
+
+
+</style>
+</html>

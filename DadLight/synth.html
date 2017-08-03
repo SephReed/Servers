@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Dad Light Controller - Synth</title>
+	<link rel="stylesheet" type="text/css" href="controller.css">
+	<script type="text/javascript" src="js/createAudioSendNode.js"></script>
+	<script type="text/javascript" src="js/shortHand.js"></script>
+
+	<script type="text/javascript">
+		var firstOn = true;
+
+		function onOff() {
+			if(firstOn) {
+				var audioCtx = new AudioContext();
+
+				var masterGain = audioCtx.createGain();
+				masterGain.gain.value = 0.5;
+				masterGain.connect(audioCtx.destination);
+
+
+				var scriptNode = createAudioSendNode(audioCtx);
+				scriptNode.connect(masterGain);
+
+				var gain = audioCtx.createGain();
+				gain.gain.value = 0.123;
+				gain.connect(scriptNode);
+
+
+				var oscillator = audioCtx.createOscillator();
+				oscillator.type = 'sine';
+				oscillator.frequency.value = 440; // value in hertz
+				oscillator.connect(gain);
+				oscillator.start();
+
+
+
+				var LFOGain = audioCtx.createGain();
+				LFOGain.gain.value = 220;
+				LFOGain.connect(oscillator.frequency);
+
+
+				var LFO = audioCtx.createOscillator();
+
+				LFO.type = 'sine';
+				LFO.frequency.value = 0.1; // value in hertz
+				LFO.connect(LFOGain);
+				LFO.start();
+				
+
+				
+				
+
+				
+				var masterVol = ID("masterVol");
+				onChange(masterVol, 0, 1, function(val) {
+					masterGain.gain.value = val;
+				}, true);
+
+				var lfoFreq = ID("lfoFreq");
+				onChange(lfoFreq, 0.01, 4, function(val) {
+					LFO.frequency.value = val;
+				}, true);
+
+				var lfoFreq = ID("lfoMag");
+				onChange(lfoFreq, 0.01, 660, function(val) {
+					LFOGain.gain.value = val;
+				}, true);
+
+
+				var lfoFreq = ID("oscFreq");
+				onChange(lfoFreq, 55, 660, function(val) {
+					oscillator.frequency.value = val;
+				}, true);
+				
+				
+
+
+				
+
+				function onChange(domNode, min, max, fn, square) {
+					var range = max-min;
+
+					domNode.addEventListener("change", function(event) {
+						var val = event.target.value/100.0;
+						if(square == true)
+							val *= val;
+
+						val = (val * range) + min;
+						fn(val);
+					})
+				}
+			}
+
+			else switchSendNodesOffOn();
+
+
+			var onOff = ID("onOff");
+
+			if(IS_OFF) 
+				onOff.classList.remove("isOn")
+			else
+				onOff.classList.add("isOn")
+
+			
+
+
+			firstOn = false;
+		}
+
+
+
+				//
+		
+
+		
+		
+	</script>
+</head>
+<body>
+<headerBar class="bg_synth">
+	<a href="index.html"><</a>
+	Synth
+</headerBar>
+<content>
+	<button id="onOff" class="big_button" onclick="onOff()">On/Off</button>
+
+	<hr>
+
+	<h1>Master Volume</h1>
+	<input id="masterVol" type="range">
+
+	<hr>
+
+	<h1>Sweep Speed</h1>
+	<input id="lfoFreq" type="range">
+
+	<hr>
+
+	<h1>Sweep Width</h1>
+	<input id="lfoMag" type="range">
+
+	<hr>
+
+	<h1>Base Freq</h1>
+	<input id="oscFreq" type="range">
+</content>
+
+
+
+
+
+</body>
+
+
+<style>
+
+
+
+
+
+</style>
+</html>

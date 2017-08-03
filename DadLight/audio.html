@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Dad Light - Audio</title>
+	<link rel="stylesheet" type="text/css" href="controller.css">
+	<script type="text/javascript" src="js/serverCommunicator.js"></script>
+	<script type="text/javascript" src="js/createAudioSendNode.js"></script>
+	<script type="text/javascript" src="js/shortHand.js"></script>
+	<script type="text/javascript" src="js/UI.js"></script>
+
+
+	<script type="text/javascript">
+		var SERVER_READY = false;
+
+		var list = UI.add("list", "none");
+		list.items = {};
+		list.current;
+		list.onValueChange(function(value) {
+			var setToMe = list.items[value]
+
+			if(setToMe) {
+				endTrack();
+
+				if(list.current)
+					list.current.classList.remove("selectedTrack");
+
+				list.current = setToMe;
+
+				if(list.current) {
+					list.current.classList.add("selectedTrack");
+
+					if(SERVER_READY)
+						SERVER.setSettings({"currentTrack" : value});
+				}
+			}
+			else if(list.current) {
+				list.value = list.current.trackName;
+			}
+
+		});
+
+
+
+		docReady(function() {
+			list.setDomNode(ID("trackList"));
+			list.domNode.addEventListener("click", function(event) {
+				list.setValue(event.target.trackName);
+			})
+
+			SERVER.getTrackList().then(function(trackList) {
+				for(var i = 0; i < trackList.length; i++) {
+					var track = trackList[i];
+					if(track.endsWith(".wav")){
+						var addMe = createTrackItem(track);
+						list.items[track] = addMe;
+						list.domNode.appendChild(addMe);
+
+						if(list.value == undefined || list.value == "none")
+							list.setValue(track);
+					}
+				}
+
+				SERVER.getSettings().then(function(settings) {
+					list.setValue(settings.currentTrack);
+					SERVER_READY = true;
+				});
+			});
+		})
+
+		
+
+		
+		
+
+
+		function createTrackItem(trackName) {
+			var out = document.createElement("li");
+			out.trackName = out.textContent = trackName;
+			return out;
+		}
+
+
+
+
+
+		var audioCtx = new AudioContext();
+		var scriptNode = createAudioSendNode(audioCtx);
+		scriptNode.connect(audioCtx.destination);
+		switchSendNodesOffOn(true);
+
+		var source;
+
+		function startTrack() {
+			source = audioCtx.createBufferSource();
+			source.connect(scriptNode);
+
+			SERVER.getTrack(list.value)
+			.then(function(request){
+				var audioData = request.response;
+
+		    	audioCtx.decodeAudioData(audioData, function(buffer) {
+			    	CURRENT_BUFFER = buffer;   
+			    	source.buffer = CURRENT_BUFFER;
+			    	switchSendNodesOffOn(false);
+			    	audioCtx.resume();
+			    	source.start();
+			  	},
+		    	function(e){"Error with decoding audio data" + e.err});
+			});
+		}
+
+		
+
+
+
+		var CURRENT_BUFFER;
+		var isPlaying = false;
+		function playPause() {
+			if(CURRENT_BUFFER) {
+				if(isPlaying) 
+					audioCtx.suspend();
+				else
+					audioCtx.resume();
+
+				isPlaying = !isPlaying;
+			}
+			else {
+				startTrack();
+				isPlaying = true;
+			}
+
+			if(isPlaying)
+				ID("play").classList.add("isOn");
+
+			else
+				ID("play").classList.remove("isOn");
+		}
+
+		function endTrack() {
+			if(isPlaying) {
+				ID("play").classList.remove("isOn");
+				source.stop();
+				CURRENT_BUFFER = undefined;
+				switchSendNodesOffOn(true);
+			}
+		}
+
+
+
+		function prevTrack() {
+			moveTrack("previousSibling", "lastChild");
+		}
+
+		function nextTrack() {
+			moveTrack("nextSibling", "firstChild");
+		}
+
+		function moveTrack(move, reset) {
+			var chooseMe = list.current[move];
+			if(chooseMe == undefined)
+				chooseMe = list.domNode[reset];
+
+			if(chooseMe) 
+				list.setValue(chooseMe.trackName);	
+		}
+
+
+	</script>
+
+</head>
+<body>
+<headerBar class="bg_audio">
+	<a href="index.html"><</a>
+	Audio
+</headerBar>
+<content>
+<button id="prev" class="med_button" onclick="prevTrack()"><</button>
+<button id="play" class="big_button" onclick="playPause()">Play</button>
+<button id="next" class="med_button" onclick="nextTrack()">></button>
+
+<br>
+<br>
+<br>
+Track List
+<ul id="trackList"></ul>
+	
+</content>
+
+
+
+<style type="text/css">
+	content {
+		padding: 20px 0px;	
+	}
+
+	ul {
+		width: 100%;
+		min-height: 100px;
+		text-align: left;
+		background-color: #FAFAFA;
+		color: #333;
+		list-style-type: none;
+		margin: 0px;
+		padding: 0px;
+		border-radius: 5px;
+		border: 3px solid #333;
+		overflow: hidden;
+	}
+
+	li {
+		padding: 3px;
+	}
+
+		li.selectedTrack {
+			background-color: orange;
+		}
+
+
+	.med_button {
+		margin: 0px;
+	}
+</style>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
