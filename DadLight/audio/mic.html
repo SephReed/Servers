@@ -2,9 +2,10 @@
 <html>
 <head>
 	<title>Dad Light Controller - Mic</title>
-	<link rel="stylesheet" type="text/css" href="controller.css">
-	<script type="text/javascript" src="js/createAudioSendNode.js"></script>
-	<script type="text/javascript" src="js/shortHand.js"></script>
+	<link rel="stylesheet" type="text/css" href="/controller.css">
+	<script type="text/javascript" src="/js/createAudioSendNode.js"></script>
+	<script type="text/javascript" src="/js/shortHand.js"></script>
+	<script type="text/javascript" src="/js/serverCommunicator.js"></script>
 
 	<script type="text/javascript">
 
@@ -21,6 +22,7 @@
 				currentStream.stop();
 				currentStream = undefined;
 				ID("record").classList.remove("isOn");
+				SERVER.setSettings({"pattern": "solid"});
 			}
 			else {
 				navigator.mediaDevices.getUserMedia({ audio: true })
@@ -32,6 +34,7 @@
 				.catch(function(err) { console.log(err.name + ": " + err.message); });
 
 				ID("record").classList.add("isOn");
+				SERVER.setSettings({"pattern": "audio"});
 			}			
 		}
 
@@ -42,7 +45,7 @@
 <body>
 <headerBar class="bg_mic">
 	<a href="index.html"><</a>
-	Mic
+	Audio - Mic
 </headerBar>
 <content>
 

@@ -45,7 +45,7 @@
 
 		//------------ SPEED ------------------
 		var speed = UI.add("speed", 4);
-		speed.min = 2;
+		speed.min = 1;
 		speed.max = 10;
 		speed.onDomNode(function(domNode) {
 			speed.domNode.addEventListener("change", function(event) {
@@ -54,7 +54,9 @@
 			})
 		})
 		speed.onValueChange(function(value) {
-			speed.domNode.value = speed.convertToRangeValue();
+			var expectedVal = speed.convertToRangeValue();
+			if(speed.domNode.value != expectedVal)
+				speed.domNode.value = expectedVal;
 			
 			if(SERVER_READY)
 				SERVER.setSettings("cycle", {"speed" : value});
@@ -110,7 +112,7 @@
 	<h1>Fade Time</h1>
 	<input id="fade" type="range">
 	<hr>
-	<h1>Cycle Speed</h1>
+	<h1>Cycle Time</h1>
 	<input id="speed" type="range">
 </content>
 

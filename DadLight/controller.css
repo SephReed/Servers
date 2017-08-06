@@ -18,7 +18,8 @@ body {
 }
 
 html {
-	background-color: #294c4c;
+	/*background-color: #294c4c;*/
+	background-color: #2f2e32;
 	/*background-color: #FAFAFA;*/
 }
 
@@ -39,7 +40,8 @@ headerBar {
 	height: 55px;
 	padding: 10px;
 	font-size: 30px;
-	background-color: #18ab72;
+	/*background-color: #18ab72;*/
+	background-color: #449a79;
 	/*border-bottom: solid 3px #007065;*/
 	text-align: center;
 	z-index: 5;
@@ -106,7 +108,8 @@ content {
 		background-repeat: no-repeat;
 		background-position: bottom 5px center;
 		background-size: auto 70%;
-		background-color: #555;
+		/*background-color: #555;*/
+		background-color: #6c675c;
 
 		box-shadow: 2px 2px 10px rgba(0,0,0,0.5), inset 2px 2px 15px rgba(250,250,250,0.1);
 	}
@@ -148,17 +151,25 @@ content {
 	background-image: url('images/icon_light.png');
 }
 
-.bg_audio {
-	background-image: url('images/icon_music.png');
+.bg_soundwave {
+	background-image: url('images/icon_soundwave.png');
 }
 
-.bg_synth {
-	background-image: url('images/icon_synth.png');
-}
+	.bg_audio {
+		background-image: url('images/icon_music.png');
+	}
 
-.bg_mic{
-	background-image: url('images/icon_mic.png');
-}
+	.bg_synth {
+		background-image: url('images/icon_synth.png');
+	}
+
+	.bg_mic{
+		background-image: url('images/icon_mic.png');
+	}
+
+	.bg_gear{
+		background-image: url('images/icon_gear.png');
+	}
 
 .bg_visualizer{
 	background-image: url('images/icon_visualizer.png');

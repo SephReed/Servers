@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Dad Light Controller - Synth</title>
+	<title>Dad Light Controller - Light</title>
 	<link rel="stylesheet" type="text/css" href="controller.css">
 	<script type="text/javascript" src="js/serverCommunicator.js"></script>
 	<script type="text/javascript" src="js/shortHand.js"></script>
@@ -24,7 +24,7 @@
 
 
 		//------------ FADE ------------------
-		var brightness = UI.add("brightness", 2.5);
+		var brightness = UI.add("brightness", 0.8);
 		brightness.onDomNode(function(domNode) {
 			brightness.domNode.addEventListener("change", function(event) {
 				brightness.setFromRangeValue(brightness.domNode.value);
@@ -98,7 +98,7 @@
 	Light
 </headerBar>
 <content>
-	<button id="onOff" class="big_button" onclick="setOnOff()">On/Off</button>
+	<button id="onOff" class="big_button" onclick="onOff()">On/Off</button>
 	<hr>
 	<h1>Brightness</h1>
 	<input id="brightness" type="range">

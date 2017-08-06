@@ -29,7 +29,7 @@
 		//------------ FADE OUT ------------------
 		var fadeOut = UI.add("fadeOut", 2.5);
 		fadeOut.min = 0.5;
-		fadeOut.max = 5;
+		fadeOut.max = 10;
 		fadeOut.onDomNode(function(domNode) {
 			fadeOut.domNode.addEventListener("change", function(event) {
 				fadeOut.setFromRangeValue(fadeOut.domNode.value);
@@ -63,9 +63,9 @@
 
 
 		//------------ SPEED ------------------
-		var speed = UI.add("speed", 4);
-		speed.min = 2;
-		speed.max = 10;
+		var speed = UI.add("speed", 0.5);
+		speed.min = 0.05;
+		speed.max = 1;
 		speed.onDomNode(function(domNode) {
 			speed.domNode.addEventListener("change", function(event) {
 				console.log(event);
@@ -80,12 +80,31 @@
 		});
 
 
+		//------------ SPEED ------------------
+		var base = UI.add("base", 0.5);
+		base.min = 0;
+		base.max = .99;
+		base.onDomNode(function(domNode) {
+			base.domNode.addEventListener("change", function(event) {
+				console.log(event);
+				base.setFromRangeValue(base.domNode.value);
+			})
+		})
+		base.onValueChange(function(value) {
+			base.domNode.value = base.convertToRangeValue();
+			
+			if(SERVER_READY)
+				SERVER.setSettings("chaos", {"base" : value});
+		});
+
+
 
 		domReady(function() {
 			on.setDomNode(ID("onOff"));
 			fadeOut.setDomNode(ID("fadeOut"));
 			fadeIn.setDomNode(ID("fadeIn"));
 			speed.setDomNode(ID("speed"));
+			base.setDomNode(ID("base"));
 		})
 
 
@@ -124,7 +143,7 @@
 <body>
 <headerBar class="bg_dice">
 	<a href="index.html"><</a>
-	Pattern - Cycle
+	Pattern - Chaos
 </headerBar>
 <content>
 
@@ -138,6 +157,10 @@
 	<hr>
 	<h1>Speed</h1>
 	<input id="speed" type="range">
+	<hr>
+	<h1>Base Brightness</h1>
+	<input id="base" type="range">
+
 </content>
 
 

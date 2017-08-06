@@ -2,11 +2,11 @@
 <html>
 <head>
 	<title>Dad Light - Audio</title>
-	<link rel="stylesheet" type="text/css" href="controller.css">
-	<script type="text/javascript" src="js/serverCommunicator.js"></script>
-	<script type="text/javascript" src="js/createAudioSendNode.js"></script>
-	<script type="text/javascript" src="js/shortHand.js"></script>
-	<script type="text/javascript" src="js/UI.js"></script>
+	<link rel="stylesheet" type="text/css" href="/controller.css">
+	<script type="text/javascript" src="/js/serverCommunicator.js"></script>
+	<script type="text/javascript" src="/js/createAudioSendNode.js"></script>
+	<script type="text/javascript" src="/js/shortHand.js"></script>
+	<script type="text/javascript" src="/js/UI.js"></script>
 
 
 	<script type="text/javascript">
@@ -129,11 +129,15 @@
 				isPlaying = true;
 			}
 
-			if(isPlaying)
+			if(isPlaying) {
+				SERVER.setSettings({"pattern": "audio"});
 				ID("play").classList.add("isOn");
+			}
 
-			else
+			else {
+				SERVER.setSettings({"pattern": "solid"});
 				ID("play").classList.remove("isOn");
+			}
 		}
 
 		function endTrack() {
@@ -171,7 +175,7 @@
 <body>
 <headerBar class="bg_audio">
 	<a href="index.html"><</a>
-	Audio
+	Audio - Music
 </headerBar>
 <content>
 <button id="prev" class="med_button" onclick="prevTrack()"><</button>

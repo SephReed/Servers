@@ -6,7 +6,7 @@ function createAudioSendNode(audioCtx) {
 	var limit = -1;
 	var count = 0;
 
-	var worker = new Worker('js/downsampler.js');
+	var worker = new Worker('/js/downsampler.js');
 
 	// Create a ScriptProcessorNode with a bufferSize of 4096 and a single input and output channel
 	var scriptNode = audioCtx.createScriptProcessor(512, 1, 1);

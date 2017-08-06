@@ -38,7 +38,7 @@ SERVER.getTrackList = function() {
 
 
 SERVER.getTrack = function(trackName) {
-	return Ajax.get("/audio/"+trackName, "arraybuffer");
+	return Ajax.get("/wavs/"+trackName, "arraybuffer");
 }
 
 

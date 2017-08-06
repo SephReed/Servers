@@ -4,8 +4,308 @@
 		"selected_items":
 		[
 			[
+				"va",
+				"values"
+			],
+			[
+				"is",
+				"isPlaying"
+			],
+			[
+				"clas",
+				"classList"
+			],
+			[
+				"audio",
+				"audioCtx"
+			],
+			[
+				"data",
+				"dataType"
+			],
+			[
+				"Cu",
+				"CURRENTLY_PLAYING"
+			],
+			[
+				"mo",
+				"moveTrack"
+			],
+			[
+				"end",
+				"endTrack"
+			],
+			[
+				"tra",
+				"trackName"
+			],
+			[
+				"set",
+				"setValue"
+			],
+			[
+				"pa",
+				"padding"
+			],
+			[
+				"ma",
+				"margin"
+			],
+			[
+				"create",
+				"createTrackItem"
+			],
+			[
+				"track",
+				"trackList"
+			],
+			[
+				"li",
+				"listNode"
+			],
+			[
+				"do",
+				"domNode"
+			],
+			[
+				"dom",
+				"domNodeListener"
+			],
+			[
+				"name",
+				"nameOrChanges"
+			],
+			[
+				"cha",
+				"changesOrNull"
+			],
+			[
+				"na",
+				"nameOrChanges"
+			],
+			[
+				"get",
+				"getCurrentPatternSettings"
+			],
+			[
+				"mic",
+				"micIsOn"
+			],
+			[
+				"ol",
+				"oldVal"
+			],
+			[
+				"S",
+				"SETTINGS"
+			],
+			[
+				"fun",
+				"function"
+			],
+			[
+				"new",
+				"newPattern"
+			],
+			[
+				"br",
+				"brightness"
+			],
+			[
+				"setL",
+				"setLightOnOff"
+			],
+			[
+				"onOff",
+				"onOffNode"
+			],
+			[
+				"pos",
+				"postToServer"
+			],
+			[
+				"padding",
+				"padding-top"
+			],
+			[
+				"mari",
+				"margin-top"
+			],
+			[
+				"back",
+				"background-size"
+			],
+			[
+				"m",
+				"margin"
+			],
+			[
+				"r",
+				"rgba"
+			],
+			[
+				"box",
+				"box-shadow"
+			],
+			[
+				"mar",
+				"margin-right"
+			],
+			[
+				"font-s",
+				"font-size"
+			],
+			[
+				"di",
+				"display"
+			],
+			[
+				"p",
+				"padding"
+			],
+			[
+				"creat",
+				"createAudioSendNode"
+			],
+			[
+				"sci",
+				"scriptNode"
+			],
+			[
+				"a",
+				"audioCtx"
+			],
+			[
+				"con",
+				"console"
+			],
+			[
+				"fu",
+				"function"
+			],
+			[
+				"vi",
+				"visualListeners"
+			],
+			[
+				"fo",
+				"font-size"
+			],
+			[
+				"noteMax",
+				"noteMaxAvg"
+			],
+			[
+				"note",
+				"noteMaxAvg"
+			],
+			[
+				"lefet",
+				"leftOverBuffers"
+			],
+			[
+				"U",
+				"Uint8Array"
+			],
+			[
+				"lef",
+				"leftOverSize"
+			],
+			[
+				"bu",
+				"buffer"
+			],
+			[
+				"buf",
+				"buffers"
+			],
+			[
+				"no",
+				"normalize"
+			],
+			[
+				"not",
+				"noteMags"
+			],
+			[
+				"im",
+				"impulses"
+			],
+			[
+				"TO",
+				"TONES"
+			],
+			[
+				"c",
+				"console"
+			],
+			[
+				"left",
+				"leftOverBuffers"
+			],
+			[
+				"le",
+				"length"
+			],
+			[
+				"au",
+				"audioProcessingEvent"
+			],
+			[
+				"tr",
+				"transition"
+			],
+			[
+				"in",
+				"inline-block"
+			],
+			[
 				"re",
-				"response"
+				"requestedFrame"
+			],
+			[
+				"out",
+				"outVals"
+			],
+			[
+				"F",
+				"Float32Array"
+			],
+			[
+				"co",
+				"configOver"
+			],
+			[
+				"mag",
+				"magnitude"
+			],
+			[
+				"i",
+				"interval"
+			],
+			[
+				"aud",
+				"audioCtx"
+			],
+			[
+				"send",
+				"sendMe"
+			],
+			[
+				"fre",
+				"frequencies"
+			],
+			[
+				"sc",
+				"scriptNode"
+			],
+			[
+				"mediaSt",
+				"mediaStreamSource"
+			],
+			[
+				"med",
+				"mediaStream"
 			],
 			[
 				"reque",
@@ -44,14 +344,6 @@
 				"pkgName"
 			],
 			[
-				"end",
-				"endsWith"
-			],
-			[
-				"pa",
-				"pathname"
-			],
-			[
 				"de",
 				"decompressed"
 			],
@@ -70,10 +362,6 @@
 			[
 				"defa",
 				"defaultHeader"
-			],
-			[
-				"c",
-				"cmd"
 			],
 			[
 				"fil",
@@ -96,10 +384,6 @@
 				"filepath"
 			],
 			[
-				"get",
-				"get_argument"
-			],
-			[
 				"chip",
 				"chipSize"
 			],
@@ -114,10 +398,6 @@
 			[
 				"chi",
 				"chipSize"
-			],
-			[
-				"in",
-				"initMe"
 			],
 			[
 				"backg",
@@ -138,10 +418,6 @@
 			[
 				"key",
 				"keydown"
-			],
-			[
-				"set",
-				"setDrawAreaCursor"
 			],
 			[
 				"mouse",
@@ -170,10 +446,6 @@
 			[
 				"ico",
 				"iconOrder"
-			],
-			[
-				"S",
-				"START_MAP"
 			],
 			[
 				"ad",
@@ -212,14 +484,6 @@
 				"imageHasPixelCode"
 			],
 			[
-				"na",
-				"naturalWidth"
-			],
-			[
-				"a",
-				"addMe"
-			],
-			[
 				"rec",
 				"rectX"
 			],
@@ -250,270 +514,6 @@
 			[
 				"pul",
 				"pullCanvas"
-			],
-			[
-				"back",
-				"background-size"
-			],
-			[
-				"chipset",
-				"chipset01"
-			],
-			[
-				"all",
-				"allowDiagonals"
-			],
-			[
-				"un",
-				"unrenderedChips"
-			],
-			[
-				"C",
-				"CURRENT_LAYER"
-			],
-			[
-				"rend",
-				"renderMe"
-			],
-			[
-				"render",
-				"renderFrame"
-			],
-			[
-				"sel",
-				"selectChip"
-			],
-			[
-				"mouseD",
-				"mouseDrag"
-			],
-			[
-				"curre",
-				"currentTool"
-			],
-			[
-				"pro",
-				"progress"
-			],
-			[
-				"alpha",
-				"alphaDrop"
-			],
-			[
-				"al",
-				"alphaFloor"
-			],
-			[
-				"num",
-				"numFrames"
-			],
-			[
-				"hue",
-				"hueOffset"
-			],
-			[
-				"r",
-				"rgbPos"
-			],
-			[
-				"mou",
-				"mouseTrails"
-			],
-			[
-				"fad",
-				"fadeFrameRequest"
-			],
-			[
-				"fa",
-				"fadeFrameRequest"
-			],
-			[
-				"mous",
-				"mouseTrails"
-			],
-			[
-				"do",
-				"document"
-			],
-			[
-				"clear",
-				"clearSize"
-			],
-			[
-				"CU",
-				"CURRENT_LAYER"
-			],
-			[
-				"fir",
-				"firstOfTag"
-			],
-			[
-				"creat",
-				"createMap"
-			],
-			[
-				"he",
-				"height"
-			],
-			[
-				"Pa",
-				"Pallette"
-			],
-			[
-				"last",
-				"lastRow"
-			],
-			[
-				"cla",
-				"classList"
-			],
-			[
-				"ov",
-				"overflow"
-			],
-			[
-				"wid",
-				"width"
-			],
-			[
-				"po",
-				"position"
-			],
-			[
-				"mar",
-				"margin"
-			],
-			[
-				"border-rig",
-				"border-right"
-			],
-			[
-				"v",
-				"vChips"
-			],
-			[
-				"chipSet",
-				"chipSetNode"
-			],
-			[
-				"h",
-				"hChips"
-			],
-			[
-				"bac",
-				"backgroundImage"
-			],
-			[
-				"up",
-				"updates"
-			],
-			[
-				"dir",
-				"directions"
-			],
-			[
-				"di",
-				"directions"
-			],
-			[
-				"o",
-				"offsetWidth"
-			],
-			[
-				"la",
-				"lastX"
-			],
-			[
-				"css",
-				"cssQueries"
-			],
-			[
-				"nw",
-				"nwse-resize"
-			],
-			[
-				"ne",
-				"nesw-resize"
-			],
-			[
-				"tr",
-				"transform"
-			],
-			[
-				"poit",
-				"pointOffset"
-			],
-			[
-				"con",
-				"console"
-			],
-			[
-				"off",
-				"offsetWidth"
-			],
-			[
-				"resizeSe",
-				"resizeSensorNode"
-			],
-			[
-				"ini",
-				"initResizeNode"
-			],
-			[
-				"el",
-				"element"
-			],
-			[
-				"tri",
-				"trigger"
-			],
-			[
-				"ex",
-				"expandSensor"
-			],
-			[
-				"p",
-				"ptr1"
-			],
-			[
-				"nam",
-				"nameOrObject"
-			],
-			[
-				"resi",
-				"resizeHandle"
-			],
-			[
-				"ba",
-				"background-color"
-			],
-			[
-				"fle",
-				"flex-direction"
-			],
-			[
-				"ho",
-				"hoveringBorder"
-			],
-			[
-				"bor",
-				"borderRadius"
-			],
-			[
-				"vo",
-				"vowel_freqs"
-			],
-			[
-				"tmp",
-				"tmp_sumCos"
-			],
-			[
-				"tmp_",
-				"tmp_sumSin"
-			],
-			[
-				"su",
-				"sumCos"
 			]
 		]
 	},
@@ -523,8 +523,25 @@
 			"file": "dad_light.js",
 			"settings":
 			{
-				"buffer_size": 0,
+				"buffer_size": 11212,
 				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "light.html",
+			"settings":
+			{
+				"buffer_size": 2325,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "index.html",
+			"settings":
+			{
+				"buffer_size": 500,
 				"line_ending": "Unix"
 			}
 		}
@@ -569,10 +586,43 @@
 	},
 	"expanded_folders":
 	[
-		"/Users/seph/Code/Server/DadLight"
+		"/Users/seph/Code/Server/DadLight",
+		"/Users/seph/Code/Server/DadLight/wavs"
 	],
 	"file_history":
 	[
+		"/Users/seph/Code/Server/DadLight/settings/main.json",
+		"/Users/seph/Code/Server/DadLight/index.html",
+		"/Users/seph/Code/Server/DadLight/audio/index.html",
+		"/Users/seph/Code/Server/DadLight/audio/settings.html",
+		"/Users/seph/Code/Server/DadLight/settings/chaos.json",
+		"/Users/seph/Code/Server/DadLight/patterns/chaos.html",
+		"/Users/seph/Code/Server/DadLight/js/createAudioSendNode.js",
+		"/Users/seph/Code/Server/DadLight/controller.css",
+		"/Users/seph/Code/Server/DadLight/patterns/cycle.html",
+		"/Users/seph/Code/Server/DadLight/audio/mic.html",
+		"/Users/seph/Code/Server/DadLight/audio/music.html",
+		"/Users/seph/Code/Server/DadLight/audio/synth.html",
+		"/Users/seph/Code/Server/DadLight/mic.html",
+		"/Users/seph/Code/Server/DadLight/music.html",
+		"/Users/seph/Code/Server/DadLight/js/serverCommunicator.js",
+		"/Users/seph/Code/Server/DadLight/light.html",
+		"/Users/seph/Code/Server/DadLight/audio.html",
+		"/Users/seph/Code/Server/DadLight/js/shortHand.js",
+		"/Users/seph/Code/Server/DadLight/js/UI.js",
+		"/Users/seph/Code/Server/DadLight/settings/cycle.json",
+		"/Users/seph/Code/Server/DadLight/patterns/index.html",
+		"/Users/seph/Code/Server/DadLight/synth.html",
+		"/Users/seph/Code/Server/DadLight/dad_light.js",
+		"/Users/seph/Code/Server/DadLight/serverCommunicator.js",
+		"/Users/seph/Code/Server/DadLight/createAudioSendNode.js",
+		"/Users/seph/Code/Server/DadLight/settings.json",
+		"/Users/seph/Code/Server/DadLight/shortHand.js",
+		"/Users/seph/Code/Server/DadLight/visualizer.html",
+		"/Users/seph/Code/Server/DadLight/downsampler.js",
+		"/Users/seph/Code/Server/DadLight/noise.wav",
+		"/Users/seph/Code/Server/DadLight/node_modules/trackList.html",
+		"/Users/seph/Code/Server/DadLight/test.wav",
 		"/Users/seph/Code/Server/ServerFileBridge/SO-BlobQ.js",
 		"/Users/seph/Code/Server/ServerFileBridge/index.html",
 		"/Users/seph/Code/Python/WebAppBrigde/test.txt",
@@ -668,43 +718,11 @@
 		"/Users/seph/Code/Web/SephReed.github.io/Digiden/public/css/digiden.css",
 		"/Users/seph/Code/Web/SephReed.github.io/Digiden/public/css/index.css",
 		"/Users/seph/Code/Web/SephReed.github.io/portfolio/troll_tricks.txt",
-		"/Users/seph/Code/Web/SephReed.github.io/portfolio/portfolio_digital_art.html",
-		"/Users/seph/Code/Web/SephReed.github.io/PINE/docs/PINE_Core.doc.html",
-		"/Users/seph/Code/Web/SephReed.github.io/PINE/docs/PINE_Includes.doc.html",
-		"/Users/seph/Code/Web/SephReed.github.io/PINE/PINE_Prettify.js",
-		"/Users/seph/Code/Web/SephReed.github.io/PINE/docs/index.html",
-		"/Users/seph/Code/Web/SephReed.github.io/PINE/docs/PINE_Var.doc.html",
-		"/Users/seph/Code/Web/SephReed.github.io/PINE/needles/suggestions.html",
-		"/Users/seph/Code/Web/SephReed.github.io/PINE/needles/selectablelist.html",
-		"/Users/seph/Code/Web/SephReed.github.io/PINE/needles/switch.html",
-		"/Users/seph/Code/Web/SephReed.github.io/PINE/needles/dropdownMenu.html",
-		"/Users/seph/Code/Web/SephReed.github.io/PINE/needles/onreturn.js",
-		"/Users/seph/Code/Web/SephReed.github.io/PINE/PINE_Var.js",
-		"/Users/seph/Code/Web/SephReed.github.io/portfolio/public/css/gentrific.css",
-		"/Users/seph/Code/Web/SephReed.github.io/PINE/tests/blobInclude.html",
-		"/Users/seph/Code/Web/SephReed.github.io/PINE/tests/nodeAddTest.html",
-		"/Users/seph/Code/Web/SephReed.github.io/barter/SephMarketTree.js",
-		"/Users/seph/Code/Web/SephReed.github.io/Hexapod/beliefs.html",
-		"/Users/seph/Code/Web/SephReed.github.io/Hexapod/bios.html",
-		"/Users/seph/Code/Web/SephReed.github.io/Hexapod/remove_current_page_link.js",
-		"/Users/seph/Code/Web/SephReed.github.io/Playa_Met/index.html",
-		"/Users/seph/Code/Web/SephReed.github.io/Hexapod/images.html",
-		"/Users/seph/Code/Web/SephReed.github.io/portfolio/portfolio_contact.html",
-		"/Users/seph/Code/Web/SephReed.github.io/portfolio/portfolio.js",
-		"/Users/seph/Code/Web/SephReed.github.io/Playa_Met/character_counter.html",
-		"/Users/seph/Code/Web/SephReed.github.io/Playa_Met/budget.js",
-		"/Users/seph/Code/Web/SephReed.github.io/PINE/needles/overlay.html",
-		"/Users/seph/Code/Web/SephReed.github.io/RobotSoul/index.html",
-		"/Users/seph/Code/Web/SephReed.github.io/RobotSoul/modules/Rack.html",
-		"/Users/seph/Code/Web/SephReed.github.io/RobotSoul/public/styles/space.css",
-		"/Users/seph/Code/Web/SephReed.github.io/RobotSoul/devices/basic/RackHeader.html",
-		"/Users/seph/Code/Web/SephReed.github.io/RobotSoul/modules/deviceBrowser.html",
-		"/Users/seph/Code/Web/SephReed.github.io/RobotSoul/devices/XBricks.html",
-		"/Users/seph/Code/Web/SephReed.github.io/RobotSoul/devices/basic/Modulus.html"
+		"/Users/seph/Code/Web/SephReed.github.io/portfolio/portfolio_digital_art.html"
 	],
 	"find":
 	{
-		"height": 23.0
+		"height": 35.0
 	},
 	"find_in_files":
 	{
@@ -724,6 +742,21 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"list.lastItem",
+			"map",
+			"on",
+			"newSettings",
+			"fade",
+			"cycle",
+			"fadeOut",
+			"fade",
+			"getSet",
+			"visualList",
+			"noteMaxA",
+			"quarterStep",
+			"written",
+			"history",
+			"wav",
 			"defaultRes",
 			"data",
 			"filePath",
@@ -836,22 +869,7 @@
 			"fade",
 			"changeSrc",
 			"include",
-			"insertSe",
-			"inWithTheNew",
-			"outWithTheOld",
-			"Universal",
-			"universal",
-			"builds",
-			".toLowerCase()",
-			"docReady",
-			"domReady",
-			"ready",
-			"mute",
-			"bitwig",
-			"PINE.up",
-			"for(var",
-			"inits",
-			"view"
+			"insertSe"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -859,6 +877,14 @@
 		"regex": false,
 		"replace_history":
 		[
+			"list.current",
+			"extMap",
+			"solid",
+			"settings",
+			"brightness",
+			"chaos",
+			"fadeIn",
+			"fadeOut",
 			"pathname",
 			"",
 			"bgImgSrc",
@@ -978,15 +1004,7 @@
 			"left, right",
 			"comparitorList",
 			"showHide",
-			"show",
-			"args",
-			"display",
-			"{{account.name}}",
-			"varName",
-			"searchable_subObject",
-			"\\n\\n",
-			"",
-			"showChoices"
+			"show"
 		],
 		"reverse": false,
 		"show_context": true,
@@ -1006,7 +1024,65 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 0,
+						"buffer_size": 11212,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2388,
+								2388
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1539.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "light.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2325,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2090,
+								2090
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/HTML/HTML.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1066.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "index.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 500,
 						"regions":
 						{
 						},
@@ -1019,13 +1095,13 @@
 						],
 						"settings":
 						{
-							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax"
+							"syntax": "Packages/HTML/HTML.sublime-syntax"
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 1,
 					"type": "text"
 				}
 			]
@@ -1070,7 +1146,7 @@
 	"project": "dad_light.sublime-project",
 	"replace":
 	{
-		"height": 42.0
+		"height": 64.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -1079,6 +1155,66 @@
 		"last_filter": "",
 		"selected_items":
 		[
+			[
+				"in",
+				"index.html"
+			],
+			[
+				"ligh",
+				"light.html"
+			],
+			[
+				"cha",
+				"patterns/chaos.html"
+			],
+			[
+				"cy",
+				"patterns/cycle.html"
+			],
+			[
+				"mic",
+				"mic.html"
+			],
+			[
+				"con",
+				"js/serverCommunicator.js"
+			],
+			[
+				"co",
+				"controller.css"
+			],
+			[
+				"aud",
+				"js/createAudioSendNode.js"
+			],
+			[
+				"ind",
+				"index.html"
+			],
+			[
+				"sho",
+				"js/shortHand.js"
+			],
+			[
+				"contro",
+				"js/serverCommunicator.js"
+			],
+			[
+				"li",
+				"light.html"
+			],
+			[
+				"sy",
+				"synth.html"
+			],
+			[
+				"",
+				"createAudioSendNode.js"
+			],
+			[
+				"syn",
+				"synth.html"
+			],
 			[
 				"4.8",
 				"PINE/PINE_Core_4.8.js"
@@ -1114,10 +1250,6 @@
 			[
 				"build",
 				"DaFT_2017/Docs/buildBook.html"
-			],
-			[
-				"co",
-				"DaFT_2017/Docs/Paint_Colors.txt"
 			],
 			[
 				"par",
@@ -1352,10 +1484,6 @@
 				"RobotSoul/index.html"
 			],
 			[
-				"in",
-				"RobotSoul/index.html"
-			],
-			[
 				"r",
 				"RobotSoul/modules/Rack.html"
 			],
@@ -1382,10 +1510,6 @@
 			[
 				"wire",
 				"RobotSoul/tests/wiretest.html"
-			],
-			[
-				"",
-				"PINE/PINE_Core_4.2.js"
 			],
 			[
 				"device",
@@ -1422,10 +1546,6 @@
 			[
 				"dis",
 				"PINE/needles/displayChildren.html"
-			],
-			[
-				"sho",
-				"CryptoBankingApp/needles/show.html"
 			],
 			[
 				"tree",
@@ -1474,10 +1594,6 @@
 			[
 				"pay",
 				"CryptoBankingApp/views/pay.html"
-			],
-			[
-				"ind",
-				"CryptoBankingApp/index.html"
 			],
 			[
 				"contact_ch",
@@ -1550,46 +1666,6 @@
 			[
 				"cor",
 				"PINE/PINE_Core.js"
-			],
-			[
-				"fa",
-				"Anonchat/public/styles/fallback.css"
-			],
-			[
-				"a",
-				"anonchat.html"
-			],
-			[
-				"map",
-				"Anonchat/views/map.html"
-			],
-			[
-				"fall",
-				"Anonchat/public/styles/fallback.css"
-			],
-			[
-				"an",
-				"anonchat.html"
-			],
-			[
-				"top",
-				"Anonchat/views/wallTopics.html"
-			],
-			[
-				"post",
-				"Anonchat/views/posts.html"
-			],
-			[
-				"c",
-				"PINE/PINE_Core.js"
-			],
-			[
-				"crea",
-				"Anonchat/views/createWall.html"
-			],
-			[
-				"ano",
-				"anonchat.html"
 			]
 		],
 		"width": 0.0

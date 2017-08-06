@@ -41,7 +41,183 @@ function init() {
 	initTones();
 	initAudioInSocket();
 	initVisualOutSocket();
-	loadSettings();
+	initSettings();
+}
+
+
+
+
+
+
+
+
+
+
+SETTINGS = {};
+SETTINGS.set = function(name, key, value) {
+	var current = SETTINGS[name];
+
+	var fn = current.fns[key];
+	if(fn) fn(value);
+	else current[key] = value;
+}
+
+
+SETTINGS.main = {};
+SETTINGS.main.fns = {}
+SETTINGS.main.fns.on = function(isOn) {
+	console.log("ON OFF", isOn);
+
+	if(isOn == false) {
+		SETTINGS.main.fns.pattern("off");
+		SETTINGS.main.on = isOn;
+	}
+
+	else {
+		SETTINGS.main.on = isOn;
+		SETTINGS.main.fns.pattern(SETTINGS.main.pattern || "solid");
+	}
+}
+
+SETTINGS.main.fns.brightness = function(bright) {
+	SETTINGS.main.brightness = bright;
+	LIGHTS.update();
+}
+
+
+SETTINGS.audio = {};
+SETTINGS.main.fns.audioFadeIn = function(time) {
+	SETTINGS.audio.upSmooth = LIGHTS.upSmooth = 1/(time*24);
+	console.log(LIGHTS.upSmooth);
+}
+SETTINGS.main.fns.audioFadeOut = function(time) {
+	SETTINGS.audio.downSmooth = LIGHTS.downSmooth = 1/(time*24);
+	console.log(LIGHTS.downSmooth);
+}
+SETTINGS.main.fns.audioBase = function(base) {
+	SETTINGS.audio.base = base;
+}
+
+
+SETTINGS.main.fns.pattern = function(patName) {
+
+	LIGHTS.upSmooth = 0.2;
+	LIGHTS.downSmooth = 0.03;
+
+	if(PATTERNS.currentTimeout) {
+		clearTimeout(PATTERNS.currentTimeout);
+		PATTERNS.currentTimeout = undefined;
+	}
+
+
+	var pattern = PATTERNS[patName];
+	if(pattern) {
+		console.log(patName);
+		var settings = SETTINGS[patName]
+		if(settings) {
+			if(settings.downSmooth)
+				LIGHTS.downSmooth = settings.downSmooth;
+
+			if(settings.upSmooth)
+				LIGHTS.upSmooth = settings.upSmooth;
+		}
+
+		pattern.draw();
+	}
+
+	if(patName != "off")
+		SETTINGS.main.pattern = patName;	
+}
+
+
+
+
+
+
+
+SETTINGS.cycle = {};
+SETTINGS.cycle.fns = {};
+SETTINGS.cycle.fns.speed = function(speed) {
+	SETTINGS.cycle.speed = ~~(speed/12*1000);
+	console.log(SETTINGS.cycle.speed);
+}
+SETTINGS.cycle.fns.fade = function(fade) {
+	// SETTINGS.cycle.fade = ~~(fade*1000);
+	SETTINGS.cycle.downSmooth = LIGHTS.downSmooth = 1/(fade*24);
+	console.log(LIGHTS.downSmooth );
+}
+
+
+
+
+
+
+
+SETTINGS.chaos = {};
+SETTINGS.chaos.fns = {};
+SETTINGS.chaos.fns.speed = function(speed) {
+	SETTINGS.chaos.speed = ~~(speed*1000);
+	console.log(SETTINGS.chaos.speed);
+}
+SETTINGS.chaos.fns.fadeOut = function(fade) {
+	SETTINGS.chaos.downSmooth = LIGHTS.downSmooth = 1/(fade*24);
+}
+SETTINGS.chaos.fns.fadeIn = function(fade) {
+	SETTINGS.chaos.upSmooth = LIGHTS.upSmooth = 1/(fade*24);
+}
+
+
+
+
+
+
+
+
+
+PATTERNS = {};
+PATTERNS.solid = {};
+PATTERNS.solid.draw = function() {
+	console.log("on");
+	LIGHTS.setAllValues("on");
+}
+
+
+PATTERNS.off = {};
+PATTERNS.off.draw = function() {
+	LIGHTS.setAllValues("off");
+}
+
+
+
+
+
+PATTERNS.cycle = {};
+PATTERNS.cycle.lastStep = 0;
+PATTERNS.cycle.draw = function() {
+	var step = PATTERNS.cycle.lastStep;
+	LIGHTS.setValue(step, 0);
+
+	step++;
+	step %= 12;
+	LIGHTS.setValue(step, 1);
+	PATTERNS.cycle.lastStep = step;
+
+	PATTERNS.currentTimeout = setTimeout(PATTERNS.cycle.draw, SETTINGS.cycle.speed || 750);
+}
+
+
+
+PATTERNS.chaos = {};
+PATTERNS.chaos.lastStep = 0;
+PATTERNS.chaos.draw = function() {
+	var step = PATTERNS.chaos.lastStep;
+	LIGHTS.setValue(step, SETTINGS.chaos.base || 0);
+
+	step = ~~(Math.random()*12);
+	LIGHTS.setValue(step, 1);
+	PATTERNS.chaos.lastStep = step;
+
+	PATTERNS.currentTimeout = setTimeout(PATTERNS.chaos.draw, SETTINGS.chaos.speed || 750);
 }
 
 
@@ -56,9 +232,122 @@ function init() {
 
 
 
+LIGHTS = {};
+
+LIGHTS.length = 12;
+
+LIGHTS.upSmooth = 0.2;
+LIGHTS.downSmooth = 0.03;
+
+LIGHTS.dMs = 42;
+LIGHTS.updateHold = false;
+
+LIGHTS.values = {};
+LIGHTS.values.current = [];
+LIGHTS.values.target = [];
+
+for(var i = 0; i < LIGHTS.length; i++) {
+	LIGHTS.values.current[i] = LIGHTS.values.target[i] = 0;
+}
+
+
+LIGHTS.setValue = function(lightNum, value) {
+	if(SETTINGS.main.on == false) return;
+
+	LIGHTS.values.target[lightNum] = value;
+	LIGHTS.update();
+}
+
+LIGHTS.setAllValues = function(states) {
+	if(SETTINGS.main.on == false) return;
+
+	for(var i = 0; i < LIGHTS.values.target.length; i++) {
+		if(states == "off") 
+			LIGHTS.values.target[i] = 0;
+
+		else if(states == "on") 
+			LIGHTS.values.target[i] = 1;
+		
+		else
+			LIGHTS.values.target[i] = states[i];
+	}
+	// console.log("setting", LIGHTS.values.target);
+	LIGHTS.update();
+}
+
+// LIGHTS.off = function() {
+
+// }
+
+// LIGHTS.on = function() {
+	
+// }
+
+
+LIGHTS.update = function() {
+	if(LIGHTS.currentInterval) return;
+
+	else 
+		LIGHTS.currentInterval = setInterval(LIGHTS.updateCycle, LIGHTS.dMs);
+}
+
+LIGHTS.updateCycle = function() {
+	var didChange = false;
+
+	for(var i = 0; i < LIGHTS.values.target.length; i++) {
+		var target = LIGHTS.values.target[i];
+		var current = LIGHTS.values.current[i];
+
+		// console.log(LIGHTS.upSmooth, LIGHTS.downSmooth);
+
+		if(current > target){
+			didChange = true;
+			LIGHTS.values.current[i] = Math.max(target, current-LIGHTS.downSmooth);
+		}
+
+		else if(current < target){
+			didChange = true;
+			LIGHTS.values.current[i] = Math.min(target, current+LIGHTS.upSmooth);
+		}
+
+	}
+
+	LIGHTS.syncListeners();
+
+	if(didChange == false) {
+		clearInterval(LIGHTS.currentInterval);
+		LIGHTS.currentInterval = undefined;
+	}
+}
+
+
+LIGHTS.syncListeners = function() {
+	var sendMe = new Uint8Array(12);
+	for(var i = 0; i < LIGHTS.values.current.length; i++){
+		var value = LIGHTS.values.current[i];
+		value *= SETTINGS.main.brightness;
+		sendMe[i] = Math.min(Math.max(value*255.0, 0), 255);
+	}
+
+	for(var i in visualListeners) {
+		var listener = visualListeners[i];
+
+		
+		try { listener.send(sendMe); }
+
+		catch(e) {
+			listener.terminate();
+			visualListeners.splice(i, 1);
+			i--;
+		}
+	}
+}
 
 
 
+/*****************************
+*			POST
+*****************************/
 
 function handlePost(request, response, body) {
 	var args = JSON.parse(body);
@@ -66,29 +355,41 @@ function handlePost(request, response, body) {
 	console.log(args);
 	        	
 	if(args.cmd == "changeSettings") {
-		getSettings(args.name, function(settings) {
+		loadSettings(args.name, function(modMe) {
 			var changes = args.changes;
 
-			for(var key in changes) 
-				settings[key] = changes[key];
+			for(var key in changes) {
+				var value = changes[key];
+				if(value != modMe[key]) {
+					SETTINGS.set(args.name, key, value)
+
+					modMe[key] = value;
+				}
+			}
 			
-			setSettings(args.name, settings);
+			saveSettings(args.name, modMe);
 		})
 
-
+		defaultResponse(response, "OK");
 	}
 	else if(args.cmd == "trackList") {
 		var data = ["Dad_Sonata_no_1.wav", "Thumbz-Diplomacy.wav"];
-		var ext = extMap[".wav"];
-		defaultResponse(response, JSON.stringify(data), ext);
+		defaultResponse(response, JSON.stringify(data));
 	}
 }
 
 
 
-const AVG_PAST_VS_NEW_WEIGHT = 10;
+
+/*****************************
+*			FFT 
+*****************************/
+const AVG_PAST_VS_NEW_WEIGHT = 4;
 var noteMaxAvg = 1;
+var noteMinAvg = 1;
 function analyzeAudio(signal) {
+
+	// if(SETTINGS.main.pattern != "audio") return;
 	
 	var output = fft.createComplexArray();
 	fft.realTransform(output, signal);
@@ -118,11 +419,11 @@ function analyzeAudio(signal) {
 		}
 	}
 
-	console.log(normalize);
+	// console.log(normalize);
 
 	// var current = {};
 	var noteMags = new Float32Array(12);
-	var noteMax = 0;
+	
 
 	// console.log(impulses);
 	var t = 0;
@@ -137,12 +438,19 @@ function analyzeAudio(signal) {
 			else {
 				if(interval < quarterStep) {
 					noteMags[t%12] += (impulse.mag/normalize);
-					noteMax = Math.max(noteMax, noteMags[t%12]);
 				}
 
 				break;
 			}
 		}
+	}
+
+	var noteMax, noteMin;
+	noteMax = noteMin = noteMags[0];
+
+	for(var i = 1; i < noteMags.length; i++) {
+		noteMin = Math.min(noteMin, noteMags[i]);
+		noteMax = Math.max(noteMax, noteMags[i]);
 	}
 
 	// console.log(noteMags);
@@ -151,29 +459,40 @@ function analyzeAudio(signal) {
 	noteMaxAvg *= (AVG_PAST_VS_NEW_WEIGHT-1)/AVG_PAST_VS_NEW_WEIGHT;
 	noteMaxAvg += noteMax/AVG_PAST_VS_NEW_WEIGHT;
 
-	console.log(noteMaxAvg);
+	noteMinAvg *= (AVG_PAST_VS_NEW_WEIGHT-1)/AVG_PAST_VS_NEW_WEIGHT;
+	noteMinAvg += noteMin/AVG_PAST_VS_NEW_WEIGHT;
 
-	var sendMe = new Uint8Array(12);
+
+
+
+	// console.log(noteMinAvg, noteMaxAvg);
+
 	for(var i = 0; i < noteMags.length; i++){
-		var ratio = noteMags[i]/noteMaxAvg;
-		sendMe[i] = Math.min(Math.max(ratio*255.0, 0), 255);
+		var val = noteMags[i] - noteMinAvg;
+		var range = noteMaxAvg - noteMinAvg;
+		noteMags[i] = (val * val) / (range * range);
+
+		noteMags[i] = Math.max(SETTINGS.audio.base || 0, noteMags[i]);
 	}
+
+
+	LIGHTS.setAllValues(noteMags);
 	
 
-	for(var i in visualListeners) {
-		var listener = visualListeners[i];
+	// for(var i in visualListeners) {
+	// 	var listener = visualListeners[i];
 
 		
-		try { listener.send(sendMe); }
+	// 	try { listener.send(sendMe); }
 
-		catch(e) {
-			listener.terminate();
-			visualListeners.splice(i, 1);
-			i--;
-		}
+	// 	catch(e) {
+	// 		listener.terminate();
+	// 		visualListeners.splice(i, 1);
+	// 		i--;
+	// 	}
 
 		
-	}
+	// }
 
 }
 
@@ -205,82 +524,87 @@ function analyzeAudio(signal) {
 *			SERVER
 *****************************/
 function initServer() {
-	http.createServer(function (request, response) {
-		console.log(`${request.method} ${request.url}`);
-		
+	try {
+		http.createServer(function (request, response) {
+			console.log(`${request.method} ${request.url}`);
+			
 
-		const parsedUrl = url.parse(request.url);
-		// extract URL path
-		let pathname = "."+parsedUrl.pathname;
+			const parsedUrl = url.parse(request.url);
+			// extract URL path
+			let pathname = "."+parsedUrl.pathname;
 
-		var ext = path.parse(pathname).ext;
-		// maps file extention to MIME typere
-		
-		
+			var ext = path.parse(pathname).ext;
+			// maps file extention to MIME typere
+			
+			
 
-	    if (request.method == 'POST') {
+		    if (request.method == 'POST') {
 
-	        var bodyBuffers = [];
-	        var totalBufferSize = 0;
+		        var bodyBuffers = [];
+		        var totalBufferSize = 0;
 
-	        request.on('data', function (data) {
+		        request.on('data', function (data) {
 
-	            bodyBuffers.push(data);
-	            totalBufferSize += data.length;
+		            bodyBuffers.push(data);
+		            totalBufferSize += data.length;
 
-	            if (totalBufferSize > 1e7) {
-	            	console.log("POSTED data too large!")
-	                request.connection.destroy();
-	            }
-	        });
+		            if (totalBufferSize > 1e7) {
+		            	console.log("POSTED data too large!")
+		                request.connection.destroy();
+		            }
+		        });
 
-	        request.on('end', function () {
+		        request.on('end', function () {
 
-	        	var body;
-	        	if(bodyBuffers.length) {
-	        		body = Buffer.allocUnsafe(totalBufferSize);
-	        		var offset = 0;
-	        		for(var i = 0; i < bodyBuffers.length; i++) {
-	        			bodyBuffers[i].copy(body, offset);
-	        			offset += bodyBuffers[i].length;
-	        		}
-	        	} 
+		        	var body;
+		        	if(bodyBuffers.length) {
+		        		body = Buffer.allocUnsafe(totalBufferSize);
+		        		var offset = 0;
+		        		for(var i = 0; i < bodyBuffers.length; i++) {
+		        			bodyBuffers[i].copy(body, offset);
+		        			offset += bodyBuffers[i].length;
+		        		}
+		        	} 
 
-	        	handlePost(request, response, body);
-	        });
-	    }
-	    else if (request.method == 'GET'){
-	    	fs.exists(pathname, function (exist) {
-			    if(!exist) {
-			      // if the file is not found, return 404
-			      	response.statusCode = 404;
-			        response.end(`File ${pathname} not found!`);
-			      	return;
-			    }
-
-			    // if is a directory search for index file matching the extention
-			    if (fs.statSync(pathname).isDirectory()) {
-					pathname += '/index.html';
-					ext = ".html";
-			    }
-
-			    // read file from file system
-			    fs.readFile(pathname, function(err, data){
-				    if(err){
-				        response.statusCode = 500;
-				        response.end(`Error getting the file: ${err}.`);
-				    } else {
-				    	defaultResponse(response, data, extMap[ext]);
+		        	handlePost(request, response, body);
+		        });
+		    }
+		    else if (request.method == 'GET'){
+		    	fs.exists(pathname, function (exist) {
+				    if(!exist) {
+				      // if the file is not found, return 404
+				      	response.statusCode = 404;
+				        response.end(`File ${pathname} not found!`);
+				      	return;
 				    }
-			    });
-			});
-	    }
-	    else {
-	    	console.log("File not found ",request.url)
-	    	defaultResponse(response, "Hello World");
-	    }
 
-	}).listen(port);
+				    // if is a directory search for index file matching the extention
+				    if (fs.statSync(pathname).isDirectory()) {
+						pathname += '/index.html';
+						ext = ".html";
+				    }
+
+				    // read file from file system
+				    fs.readFile(pathname, function(err, data){
+					    if(err){
+					        response.statusCode = 500;
+					        response.end(`Error getting the file: ${err}.`);
+					    } else {
+					    	defaultResponse(response, data, extMap[ext]);
+					    }
+				    });
+				});
+		    }
+		    else {
+		    	console.log("File not found ",request.url)
+		    	defaultResponse(response, "Hello World");
+		    }
+
+		}).listen(port);
+	}
+	catch(err) {
+		console.log(err);
+	}
 }
 
 
@@ -295,13 +619,13 @@ function initTones() {
 	for(var tone = A1; tone < SAMPLE_RATE/2; tone *= halfStep)
 		TONES.push(tone);
 
-	console.log(TONES);
+	// console.log(TONES);
 }
 
 
 
 /*****************************
-*			FFT 
+*		Audio Streaming 
 *****************************/
 function initAudioInSocket() {
 	var buffers = [];
@@ -309,6 +633,7 @@ function initAudioInSocket() {
 
 	const audioIn =  new WebSocket.Server({ port: 4321 });
 	audioIn.on('connection', function connection(ws) {
+		console.log("AUDIO IN")
 	  	ws.on('message', function incoming(message) {
 	  		
 	  		var addMe = new Float32Array(message.length);
@@ -379,6 +704,7 @@ function initAudioInSocket() {
 	    		totalBufferSize = leftOverSize;
 
 
+	    		// console.log("analyze");
 	    		analyzeAudio(signal);
 
 
@@ -417,53 +743,33 @@ function initVisualOutSocket() {
 /*****************************
 *		Load Settings
 *****************************/
-function loadSettings() {
-	getSettings("main", function(settings) {
-		setPattern(settings.pattern);
-	});
-}
+function initSettings(name) {
+	console.log("NAME IS", name);
 
-
-
-
-
-
-
-
-
-SETTINGS = {};
-SETTINGS.fns = {};
-SETTINGS.fns.on = function(isOn) {
-	if(isOn == false)
-		setLights("off");
-
-	SETTINGS.on = isOn;
-}
-
-
-
-LIGHTS = {};
-LIGHTS.upSmooth = 0.2;
-LIGHTS.downSmooth = 0.01;
-LIGHTS.values = [];
-
-function setLights(states) {
-	for(var i = 0; i < LIGHTS.values; i++) {
-		if(states == "off") 
-			LIGHTS.values[i] = 0;
+	if(name != undefined) {
 		
-		else {
-			var newVal = states[i];
-			var oldVal = LIGHTS.values[i];
-			if(oldVal > newVal)
-				LIGHTS.values[i] = Math.max(newVal, oldVal-LIGHTS.downSmooth)
-
-			else if(LIGHTS.values[i] < val)
-				LIGHTS.values[i] = Math.max(newVal, oldVal-LIGHTS.downSmooth)			 
-		}
+		loadSettings(name, function(settings) {
+			for(var key in settings) {
+				SETTINGS.set(name, key, settings[key]);
+			}
+		});
 	}
 	
+	else {
+		initSettings("main");
+		initSettings("cycle");
+		initSettings("chaos");
+	}
 }
+
+
+
+
+
+
+
+
+
 
 
 
@@ -490,14 +796,18 @@ function defaultResponse(response, data, contentType) {
 
 
 
-function getSettings(name, thenFn) {
+function loadSettings(name, thenFn) {
 	fs.readFile("settings/"+name+".json", function(err, data){
-		var settings = JSON.parse(data);
-		thenFn(settings);
+		if(err) console.error(err);
+
+		else {
+			var settings = JSON.parse(data);
+			thenFn(settings);
+		}
 	});
 }
 
-function setSettings(name, newVal) {
+function saveSettings(name, newVal) {
 	fs.writeFileSync("settings/"+name+".json", JSON.stringify(newVal));
 }
 
@@ -508,28 +818,25 @@ function setSettings(name, newVal) {
 
 
 
-function setPattern(name) {
-	var newPattern = PATTERNS[name];
+// function setPattern(name) {
+// 	var newPattern = PATTERNS[name];
 
-	if(newPattern) {
-		getSettings("main", function(settings) {
-			if(settings.pattern != name) {
-				settings.pattern = name;
-				setSettings(settings);
+// 	if(newPattern) {
+// 		loadSettings("main", function(settings) {
+// 			if(settings.pattern != name) {
+// 				settings.pattern = name;
+// 				saveSettings(settings);
 
-				newPattern();
-			}
-		});
-	}
-}
-
-
+// 				newPattern();
+// 			}
+// 		});
+// 	}
+// }
 
 
-PATTERNS = {};
-PATTERNS.solid = function() {
 
-}
+
+
 
 
 
