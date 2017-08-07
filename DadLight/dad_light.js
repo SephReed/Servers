@@ -5,7 +5,22 @@ const path = require('path');
 const FFT_JS = require('fft.js');
 const WavEncoder = require("wav-encoder");
 const WebSocket = require('ws');
+var piblaster = require('pi-blaster.js');
 const port = process.argv[2] || 80;
+
+
+//all [17,18,16,19,13,20,12,21,6,22,5,23,4,24,25,26,27]
+//banned [6,]
+//non banned [17,18,16,19,13,20,12,21,22,5,23,4,24,25,26,27]
+
+const GPIOS = [17,18,16,19,13,20,12,21,22,5,23,4,24,25,26,27].splice(0,12);
+console.log(GPIOS);
+
+for(var i in GPIOS) {
+	piblaster.setPwm(GPIOS[i], 1);
+}
+
+
 
 
 
@@ -313,6 +328,7 @@ LIGHTS.updateCycle = function() {
 	}
 
 	LIGHTS.syncListeners();
+	LIGHTS.syncGPIO();
 
 	if(didChange == false) {
 		clearInterval(LIGHTS.currentInterval);
@@ -344,6 +360,14 @@ LIGHTS.syncListeners = function() {
 }
 
 
+LIGHTS.syncGPIO = function() {
+	var vals = LIGHTS.values.current;
+	for(var i in vals) {
+		var val = Math.min(Math.max(vals[i], 0), 1);
+		piblaster.setPwm(GPIOS[i], val);	
+	}
+}
+
 
 /*****************************
 *			POST
@@ -372,9 +396,16 @@ function handlePost(request, response, body) {
 
 		defaultResponse(response, "OK");
 	}
-	else if(args.cmd == "trackList") {
-		var data = ["Dad_Sonata_no_1.wav", "Thumbz-Diplomacy.wav"];
-		defaultResponse(response, JSON.stringify(data));
+	else if(args.cmd == "trackList") {	
+		var out = []
+
+		fs.readdirSync("wavs").forEach(file => {
+			if(file.endsWith('.wav')) {
+			 	out.push(file);
+			}
+		})
+        
+        defaultResponse(response, JSON.stringify(out));
 	}
 }
 
