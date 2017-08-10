@@ -20,6 +20,10 @@ body {
 html {
 	/*background-color: #294c4c;*/
 	background-color: #2f2e32;
+	background-image: url('images/ThumbzSymbol_white.png');
+	background-position: bottom 2px right 2px;
+	background-size: auto 20px;
+	background-repeat: no-repeat;
 	/*background-color: #FAFAFA;*/
 }
 
