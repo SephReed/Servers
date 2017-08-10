@@ -364,7 +364,7 @@ LIGHTS.syncGPIO = function() {
 	var vals = LIGHTS.values.current;
 	for(var i in vals) {
 		var val = Math.min(Math.max(vals[i], 0), 1);
-		piblaster.setPwm(GPIOS[i], val);	
+		piblaster.setPwm(GPIOS[i], val * val);	
 	}
 }
 
