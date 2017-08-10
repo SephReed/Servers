@@ -1,0 +1,8 @@
+#!/bin/sh
+# launcher.sh
+# navigate to home directory, then to this directory, then execute python script, then back home
+
+sudo pi-blaster --gpio 17,18,16,19,13,20,12,21,22,5,23,4,24,25,26,27
+cd /home/pi/Desktop/Servers/DadLight
+sudo node dad_light.js
+cd ~
