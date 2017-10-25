@@ -1,0 +1,216 @@
+--------------------------------------------------
+Reference
+--------------------------------------------------
+Any `quotes` which start with `$` imply they are on the command line.  You do not need to type `$`, you should see it on the command line already.
+
+These unix commands are necessary for navigation:
+`$ ls` -- list all items and folders in directory.  use whenever lost
+`$ cd some/dir/name` -- change directory, to some directory name
+`$ cd ..` -- change directory to parent folder
+`$ cd ~/some/dir/name` -- '~' just means start at user root.  like your user account home folder
+
+These unix commands are nice to know something about
+`$ sudo` -- gives you admin privileges.  necessary for most things that could be used to hack
+`$ apt-get install some_package` -- check online for some package, download it, install it.  usually requires sudo
+`$ node some_file` -- use node.js to run a file
+`$ git` -- github tools.
+`$ man name_of_thing` -- opens up a manual for the thing, if it exists
+`$ name_of_thing help` -- opens up the help for the thing, if it exists
+
+
+
+
+
+
+--------------------------------------------------
+Getting Raspian Running
+--------------------------------------------------
+1. download Raspian (an OS)
+2. download PiFiller (an App for Mac)
+3. Use PiFiller to put Raspian on a microSD card
+4. create a blank file (not text file) on the microSD card called "ssh", necessary to ssh in
+5. connect rpi to modem/router with Ethernet, and turn on rpi
+
+
+
+
+--------------------------------------------------
+SSH IN/ Finding IP
+--------------------------------------------------
+1. log in as admin on your router/modem, check the physical router for instructions on how to do this or look it up based off the router id if the instructions aren't printed on it
+  -- the default is to open a web browser and go to `192.168.0.1`, username and password are up to you, but default for those is "admin" and "password" on my modem.  They were listed in the booklet that came with the modem, and I found it online.
+  -- if you can not get into the modem, search the internet for "osx how to list local ips" or "linux how to list local ips".
+2. find the IP of your rpi, from here on labeled [RPI_IP]
+3. ssh into your rpi  `$ sudo ssh pi@[RPI_IP]`, where [RPI_IP] is the IP of your rpi. You'll need to first use your password for 'sudo', and then you'll be asked for a password for the pi.  The default password is `raspberry`
+
+
+
+
+--------------------------------------------------
+First Set up for RPi
+--------------------------------------------------
+1. ssh into rPi
+2. once in, run `$ sudo raspi-config`
+3. change any settings you wish (recommended: expand filesystem, change name, change password, disable gui)
+
+
+
+
+
+
+----------------------------------------------------
+Setting Up Dad Light Dependencies
+----------------------------------------------------
+--main repo---
+1. use unix commands (cd, ls) to go to desktop `$ cd Desktop`
+2. use git to clone dad_light project `$ sudo git clone https://github.com/SephReed/Servers.git`
+
+--GPIO PWM---
+1. install the tools for building pi-blaster `$ sudo apt-get install autoconf`
+2. navigate to desktop (or anywhere you'll remember pi-blaster being) `$ cd ~/Desktop`
+3. clone pi-blaster `$ sudo git clone https://github.com/sarfata/pi-blaster.git`
+4. navigate to pi-blaster `$ ls` then `$ cd this_is_a_test_on_how_to_navigate_in_unix`
+5. run `$ sudo ./autogen.sh`, 
+6. As per it's instructions, run `$ sudo ./configure`
+7. Then run `$ sudo make`
+8. Then install`$ sudo make install`
+9. And finally, register the ports `$ sudo pi-blaster --gpio 17,18,16,19,13,20,12,21,22,5,23,4,24,25,26,27`
+10. This line of code also runs everytime the pi starts.
+?. if this doesn't work, check https://github.com/sarfata/pi-blaster
+
+--Node js---
+1. one liner to install node.js -- `$ curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+sudo apt-get install -y nodejs`
+?. if this doesn't work, check https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions
+
+
+
+
+
+----------------------------------------------------
+Running Dad Light
+----------------------------------------------------
+1. ssh into rpi (see ssh above)
+2. use unix commands (cd, ls) to go to dad_light project folder `$ cd Desktop/Servers/DadLight`
+3. run server with `$ sudo node dad_light.js`
+4. to use dad light, open a web browsers on any device attached to the same modem and type [RPI_IP] into the address bar
+
+
+
+
+----------------------------------------------------
+Making Dad Light run on startup
+----------------------------------------------------
+1. navigate to DadLight folder `$ ~/Desktop/Servers/DadLight`
+2. change the state of bash file `dad_light_startup.sh` to be executable `$ sudo chmod 755 ./dad_light_startup.sh`
+3. create a linked copy in /etc/init.d/ called `dadlight` -- `$ sudo ln ./dad_light_startup /etc/init.d/dadlight`
+4. register dad light to be run on startup -- `$ sudo update-rc.d dadlight defaults`
+?. if this doesn't work, check http://www.stuffaboutcode.com/2012/06/raspberry-pi-run-program-at-start-up.html
+
+
+
+
+
+----------------------------------------------------
+Setting up in new places
+----------------------------------------------------
+Every time you set up dad light in a new place, you'll need to connect dad light to the internet either with ethernet or wirelessly, and then figure out its IP.  If you set it up somewhere you can not attach directly to the modem, you'll need to bring a keyboard, mouse, and monitor to set up the wireless connection.  The controlling device (probably a phone) will also need to be connected to the same modem.
+
+
+
+
+----------------------------------------------------
+Adding music
+----------------------------------------------------
+(All music must be in .wav format, and will take less time to play if mono and 16bit PCM)
+1. make sure you have audacity (app for mac/win) installed
+2. open the song
+3. use help to find the "stereo to mono" feature
+4. `Set Sample Format` > `16bit PCM` in the options at the top left of the waveform, looks like this --> [X][Song Name \/]
+5. File > Export the audio -- make sure the file ends in '.wav'
+6. Get access to the rpi filesystem using either APF (described below) or by plugging the sd card into your computer
+7. Put the .wav file in the folder Dekstop/Server/DadLight/wavs
+8. The music player lists all files in DadLight/wavs which end in ".wav"
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------------
+Wiring lights
+----------------------------------------------------
+The relation between notes and GPIOs is as follows:
+Num 	GPIO 	Note
+1 		G17		A
+2 		G18		A#
+3		G16		B
+4		G19		C
+5		G13		C#
+6		G20		D
+7		G12 	D#
+8		G21 	E
+9		G22 	F
+10		G5 		F#
+11		G23 	G
+12		G4 		G#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------------
+Extra -- Making Dad Light Wireless
+----------------------------------------------------
+1. Do either A or B to access the gui version of Raspian
+	A. get a mouse, keyboard, and hdmi screen. connect rpi to all of those, turn it on
+	B. use VNC (described as an Extra below)
+2. if you have gui disabled, and you see only command line, start thet gui with `$ start x`
+3. use the wifi tool in the top right to connect to your wifi
+4. the [RPI_IP] is likely to change when going from ethernet to wifi connection, make sure to log into your modem to double check you have the right IP
+
+
+
+
+
+------------------------------------------------------------------------
+Extra -- AFP: Easier file editing, mostly useful for coding and adding music
+------------------------------------------------------------------------
+1. make sure you have installed nettatalk `sudo apt-get install netatalk` to access local file system
+2. open Finder and choose `connect to server` (use help to find it)
+3. the url will be `afp://[RPI_IP]`
+?. if this is too difficult, you can always move files onto the sd card directly
+
+
+
+------------------------------------------------------------------------
+Extra -- VNC: Headless gui control (from your computer)
+------------------------------------------------------------------------
+1. install tightvncserver `sudo apt-get install tightvncserver`
+2. run `vncserver`, it will output a message saying `New "X" desktop` is running on some number [VNC_NUM] (probably 1)
+3. open Finder and choose `connect to server` (use help to find it)
+4. the url will be `vnc://[RPI_IP]:590[VNC_NUM]`, you may need to use a password set earlier for vnc
+
+
+
+----------------------------------------------------
+Extra -- Stopping a server that was run on start up
+----------------------------------------------------
+1. check for the PID of the process running on port 80 -- `$ sudo lsof -i :80` 
+2. kill it -- `$ sudo kill [[SOME_PID]]`
+
+
+

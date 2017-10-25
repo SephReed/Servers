@@ -4,7 +4,13 @@
 
 var downSampleRatio = 8;
 
-var ws = new WebSocket('ws://localhost:4321');
+var url = new URL(self.location);
+
+
+var socketUrl = 'ws://'+url.hostname+':4321';
+console.log(socketUrl);
+
+var ws = new WebSocket(socketUrl);
 ws.binaryType = 'arraybuffer';
 
 
