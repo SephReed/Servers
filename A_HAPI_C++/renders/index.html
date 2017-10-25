@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<!-- <title>API Viewer</title> -->
+	<script type="text/javascript" src="ajax.js"></script>
+
+	<script>
+		// Ajax.get("overview.json").then(function(request){
+		// 	var overview = JSON.parse(request.response)
+		// 	console.log(overview);
+
+		// 	var overviewNode = createDOMTree(overview.root, overview);
+		// 	document.getElementById("overview").appendChild(overviewNode);
+
+		
+		// });
+
+		
+		var $file_content;
+		document.addEventListener("DOMContentLoaded", function() {
+			//make links update the url args
+			var links = document.getElementsByTagName("a");
+			for(var i = 0; i < links.length; i++) {
+				var link = links[i];
+				if(link.target == "file_content") {
+					link.addEventListener("click", function(event) {
+						var file_url = event.target.attributes.href.value;
+						window.history.replaceState({}, file_url, "index.html?file="+file_url+"&overview=includes");
+					});
+				}
+			}
+
+			//set the page based off url args
+			$file_content = document.getElementById("file_content");
+			var argString = (window.location+"").match(/\?.*/g);
+			if(argString) {
+				var args = {};
+
+				argString = argString[0];
+				argString.substr(1, argString.length)
+				.split("&")
+				.forEach(function(keyVal){
+					keyVal = keyVal.split("=");
+					args[keyVal[0]] = keyVal[1];
+				});
+				
+				$file_content.src = args.file;
+			}
+		});
+		
+
+
+
+		// function createDOMTree(path, map, state) {
+		// 	state = state || {
+		// 		added: []
+		// 	};
+
+		// 	if(state.added.indexOf(path) != -1)
+		// 		return;
+
+		// 	state.added.push(path);
+		// 	var file = map[path];
+		// 	// console.log(path, map);
+
+		// 	var out = document.createElement("class");
+		// 	path = path.replace("test/", '');
+
+		// 	out.innerHTML = "<switch></switch><a href='../renders/"+path+".html' target='file_content'>"+path+"</a>\n";
+
+		// 	var childContainer = document.createElement("includes");
+		// 	out.appendChild(childContainer);
+
+		// 	file.includes.forEach(function(inc) {
+		// 		var addMe = createDOMTree(inc, map, state);
+		// 		if(addMe)
+		// 			childContainer.appendChild(addMe);
+		// 	});
+
+		// 	return out;
+		// }
+
+		// var CACHE = {};
+
+		// var V = {};
+		// V.INC = "inc";
+
+		// function setTreeView(viewType) {
+		// 	if(viewType == V.INC) {
+		// 		Ajax.get("")
+		// 	}
+		// }
+
+	</script>
+</head>
+<body>
+	<noscript>noscript: url/shown file disconnect, no line-numbers</noscript>
+	<content>
+		<iframe id="overview" src="overview/includeMap.html"></iframe>
+		<iframe id="file_content" src="main.cpp.html" name="file_content"></iframe>
+	</content>
+
+</body>
+
+<style>
+body, html {
+	display: relative;
+	height: 100%;
+	width: 100%;
+	padding: 0px;
+	margin: 0px;
+	box-sizing: border-box;
+	font-family: arial;
+}
+
+*, *::before, *::after{
+	box-sizing: inherit;
+}
+
+	noscript {
+		display: block;
+
+		font-size: 30px;
+		text-align: center;
+
+		animation: ease-in noscript_say_and_fade 0.25s;
+		animation-delay: 4s;
+		animation-fill-mode: forwards;
+	}
+
+	@keyframes noscript_say_and_fade{
+		from {
+			height: 30px;
+		}
+		to {
+			height: 0px;
+			display: none;
+		}
+	}
+
+
+	content {
+		display: grid;
+		height: 100%;
+		width: 100%;
+		grid-template-columns: 200px auto;
+	}
+
+	
+</style>
+</html>

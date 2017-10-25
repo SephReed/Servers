@@ -1,0 +1,54 @@
+body {
+	font-family: arial;
+	background-color: #272822;
+	color: #f8f8ed;
+	/*color: #646e5d;*/
+}
+
+	classDef:hover{
+		background-color: rgba(120,120,120,0.15);
+	}
+		classDefBlock:hover {
+			background-color: rgba(20,120,120,0.15);
+		}
+
+			classFnPrivacyBlock:hover {
+				background-color: rgba(120,20,120,0.15);
+			}
+
+				classFnDef {
+					color: #ace100;
+				}
+
+					classFnParams {
+						color: #f8f8ed;
+					}
+
+	
+
+	comment {
+		color: #646e5d;
+		/*color: #f8f8ed;*/
+	}
+		TODO {
+			color: red;
+		}
+
+	keyComp {
+		color: #c62773;
+	}
+		a, include {
+			color: #d8c963;
+		}
+
+	keyVar {
+		color: #77d9f1;
+	}
+
+	keyClass {
+		color: #FFA027;
+	}
+
+		classNameDef, inheritance {
+			color: #ace100;
+		}

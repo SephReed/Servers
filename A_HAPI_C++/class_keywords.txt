@@ -1,0 +1,5 @@
+class
+public
+private
+protected
+virtual

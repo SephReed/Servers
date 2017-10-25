@@ -1,0 +1,11 @@
+#include 
+#ifndef
+#define 
+#extern 
+#endif 
+#if 
+if
+else
+new
+delete
+return

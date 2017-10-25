@@ -1,0 +1,27 @@
+overview {
+	display: block;
+	background-color: #8d8d82;
+	
+	height: 100%;
+}
+
+	overview class {
+		display: block;
+	}
+
+		overview class > switch {
+			display: inline-block;
+			height: 20px;
+			width: 20px;
+			background-color: red;
+		}
+
+		overview class > a {
+			display: inline-block;
+			font-size: 12px;
+		}
+
+		overview class includes {
+			display: block;
+			padding-left: 1em;
+		}
