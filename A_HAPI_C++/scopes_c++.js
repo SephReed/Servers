@@ -41,7 +41,7 @@ HAPI.scopes.list = [
 	},
 		{
 			name: "TODO",
-			start:  "TODO:",
+			start:  "//TODO:",
 			startInclusive: true,
 			end: "\n",
 			endInclusive : false,
@@ -218,7 +218,23 @@ HAPI.scopes.byID["include"].onComplete = function(scopeChunk) {
 		var include = chunk.file.rawText.substring(chunk.startIndex+1, chunk.endIndex);
 		console.log("adding file", include);
 		chunk.file.addInclude(include);
+		scopeChunk.includePath = include;
 	}
+}
+
+HAPI.scopes.byID["include"].onHtmlOut = function (scopeChunk, htmlOut) {
+	var path = scopeChunk.includePath;
+	if(path !== undefined) {
+		htmlOut.unshift("<a href='"+path+".html'>");
+		htmlOut.push("</a>");
+	}
+}
+
+HAPI.scopes.byID["fnName"].onComplete = function(scopeChunk) {
+	var fnName = scopeChunk.file.rawText.substring(scopeChunk.startIndex, scopeChunk.endIndex+1);
+	scopeChunk.file.classFns = scopeChunk.file.classFns || {};
+
+	scopeChunk.file.classFns[fnName] = {};
 }
 
 

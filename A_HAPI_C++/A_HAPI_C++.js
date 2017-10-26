@@ -7,8 +7,6 @@ const fs = require('fs');
 
 
 var HAPI = {};
-eval(fs.readFileSync('scopes_c++.js')+'');
-
 HAPI.mootPath = pathTool.dirname(rootFilePath);
 
 HAPI.files = {};
@@ -34,7 +32,7 @@ HAPI.run = function() {
 
 		var writePromises = [];
 		for(var path in HAPI.files) {
-			var file = HAPI.files[path];
+			let file = HAPI.files[path];
 
 			// var htmlVersion = HAPI.htmlifySpacing(
 			// 	`<link href='code_style.css' rel='stylesheet' type='text/css'>`
@@ -53,6 +51,12 @@ HAPI.run = function() {
 			overview[path] = {
 				includes: file.includePaths
 			}
+
+			writePromises.push(file.getDoc()
+				.then((doc) => {
+					fs.promise.writeFile("renders/"+file.name+".html", doc)
+				})
+			);
 		}
 
 		
@@ -472,6 +476,10 @@ HAPI.class.ScopeChunk.prototype.getHtml = function() {
 	}
 
 	outStrings.push("</"+THIS.scope.name+">");
+
+	if(THIS.scope.onHtmlOut)
+		THIS.scope.onHtmlOut(THIS, outStrings);
+
 	return outStrings;
 };
 
@@ -524,6 +532,7 @@ HAPI.class.ScopeChunk.prototype.getHtml = function() {
 HAPI.class.File = function(filePath) {
 	var THIS = this;
 	THIS.path = filePath;
+	THIS.name = pathTool.basename(THIS.path).split('.')[0];
 	THIS.includes = [];
 	// THIS.includePaths = [];
 	THIS.rawText;
@@ -710,6 +719,7 @@ HAPI.createIncludeOrderOverview = function(filePath, map, state) {
 	filePath = filePath.replace("test/", '');
 
 	out += "<a href='../"+filePath+".html' target='file_content'>"+filePath+"</a>";
+	out += "<a href='../"+file.name+".html' target='file_content' class='sameName'>(doc)</a>"
 
 	var includesHtml = "";
 	var splitName = pathTool.basename(filePath).split('.');
@@ -885,7 +895,15 @@ HAPI.getLast = function(arr){
 }
 
 
+eval(fs.readFileSync('scopes_c++.js')+'');
+eval(fs.readFileSync('generate_doc.js')+'');
 
 HAPI.run().then(function(){
 	console.log("COMPLETE!");
 });
+
+
+
+
+
+
