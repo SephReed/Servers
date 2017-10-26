@@ -1,14 +1,38 @@
-body {
-	font-family: arial;
-	background-color: #272822;
-	color: #f8f8ed;
-	/*color: #646e5d;*/
+/*@font-face {
+	font-family: 'UbuntuMono';
+  	src:  url('fonts/UbuntuMono-Regular.ttf') format('truetype');
+}
+*/
+
+/*@font-face {
+	font-family: 'RobotoMono';
+  	src:  url('fonts/RobotoMono-Regular.ttf') format('truetype');
+}*/
+
+/*@font-face {
+	font-family: 'SourceCodePro';
+  	src:  url('fonts/SourceCodePro-Regular.ttf') format('truetype');
+}*/
+
+@font-face {
+	font-family: 'Inconstolata';
+  	src:  url('fonts/Inconstolata-Regular.ttf') format('truetype');
 }
 
-	classDef:hover{
+
+
+body {
+	font-family: "Inconstolata", arial;
+	font-size: 14px;
+	background-color: #272822;
+	/*color: #f8f8ed;*/
+	color: #646e5d;
+}
+
+	classDef:hover, fnDef:hover{
 		background-color: rgba(120,120,120,0.15);
 	}
-		classDefBlock:hover {
+		classDefBlock:hover, fnDefBlock:hover {
 			background-color: rgba(20,120,120,0.15);
 		}
 
@@ -20,28 +44,37 @@ body {
 					color: #ace100;
 				}
 
-					classFnParams {
+					classFnParams, args {
 						color: #f8f8ed;
 					}
 
 	
 
 	comment {
-		color: #646e5d;
-		/*color: #f8f8ed;*/
+		/*color: #646e5d;*/
+		color: #f8f8ed;
+		font-size: 15px;
 	}
 		TODO {
 			color: red;
 		}
 
+	num {
+		color: #ab82ff;
+	}
+
 	keyComp {
 		color: #c62773;
 	}
-		a, include {
+		a, string {
 			color: #d8c963;
 		}
 
-	keyVar {
+		include {
+			color: green;
+		}
+
+	keyVar, fnName {
 		color: #77d9f1;
 	}
 
@@ -49,6 +82,6 @@ body {
 		color: #FFA027;
 	}
 
-		classNameDef, inheritance {
+		classNameDef, inheritance, fnHeaderDef fnName, classfnprivacyblock fnName {
 			color: #ace100;
 		}

@@ -1,4 +1,4 @@
-const path = require('path');
+const pathTool = require('path');
 const rootFilePath = process.argv[2];
 const fs = require('fs');
 
@@ -9,28 +9,13 @@ const fs = require('fs');
 var HAPI = {};
 eval(fs.readFileSync('scopes_c++.js')+'');
 
-HAPI.mootPath = path.dirname(rootFilePath);
+HAPI.mootPath = pathTool.dirname(rootFilePath);
 
 HAPI.files = {};
 HAPI.registerFile = function(file) {
 	HAPI.files[file.path] = file;
 }
 
-
-HAPI.writeFile = function(outPath, data) {
-	return new Promise(function(resolve) {
-		fs.writeFile(outPath, data, resolve);	
-	});
-}
-
-HAPI.lstat = function(filePath) {
-	return new Promise(function(resolve, reject) {
-		fs.lstat(filePath, function(err, stats){
-			if(err) reject();
-			else resolve(stats);
-		});
-	});
-}
 
 
 
@@ -45,32 +30,37 @@ HAPI.run = function() {
 	console.log("RUN!");
 	return HAPI.sprout(rootFilePath).then(function(){
 		var overview = {};
-		overview.root = HAPI.files[rootFilePath].path;
+		overview.root = rootFilePath;
 
 		var writePromises = [];
 		for(var path in HAPI.files) {
 			var file = HAPI.files[path];
 
-			var htmlVersion = HAPI.htmlify(file);
+			// var htmlVersion = HAPI.htmlifySpacing(
+			// 	`<link href='code_style.css' rel='stylesheet' type='text/css'>`
+			// 	+ file.scopeChunk.getHtml().join('')
+			// );
+
+			var htmlVersion = `<link href='code_style.css' rel='stylesheet' type='text/css'>`
+			+ file.scopeChunk.getHtml().join('')
 
 			var outPath = file.path.replace(HAPI.mootPath, "");
 			outPath = "renders/"+outPath+".html";
 
 			fs.ensureDirectoryExistence(outPath)
-			writePromises.push(HAPI.writeFile(outPath, htmlVersion));
+			writePromises.push(fs.promise.writeFile(outPath, htmlVersion));
 
 			overview[path] = {
-				includes: file.includes.map(function(inc){ return inc.path; })
+				includes: file.includePaths
 			}
 		}
 
-		// var overviewPath = overview.root.replace(HAPI.mootPath, "");
-		var includeOverviewHtml = HAPI.createIncludeOrderOverview(overview.root, overview);
-		includeOverviewHtml =  `<link href='overview/style.css' rel='stylesheet' type='text/css'>` + includeOverviewHtml;
+		
+		fs.ensureDirectoryExistence("renders/overview/");
+		// writePromises.push(fs.promise.writeFile("renders/overview/file_data.json", JSON.stringify(overview)));
 
-		fs.ensureDirectoryExistence("renders/overview/null");
-		writePromises.push(HAPI.writeFile("renders/overview/file_data.json", JSON.stringify(overview)));
-		writePromises.push(HAPI.writeFile("renders/overview/includeMap.html", includeOverviewHtml));
+		var includeOverviewHtml = HAPI.createIncludeOrderOverview(rootFilePath, HAPI.files);
+		writePromises.push(fs.promise.writeFile("renders/overview/includeMap.html", includeOverviewHtml));
 
 		return Promise.all(writePromises);
 
@@ -79,36 +69,7 @@ HAPI.run = function() {
 	});
 }
 
-HAPI.createIncludeOrderOverview = function(path, map, state) {
-	state = state || {
-		added: []
-	};
 
-	if(state.added.indexOf(path) != -1)
-		return;
-
-	state.added.push(path);
-	var file = map[path];
-	// console.log(path, map);
-
-	var out = "<class>";
-	path = path.replace("test/", '');
-
-	out += "<switch></switch><a href='../"+path+".html' target='file_content'>"+path+"</a>\n";
-
-	// var childContainer = document.createElement("includes");
-	// out.appendChild(childContainer);
-	out += "<includes>"
-
-	file.includes.forEach(function(inc) {
-		var addMe = HAPI.createIncludeOrderOverview(inc, map, state);
-		if(addMe)
-			out += addMe;
-	});
-
-	out += "</includes></class>"
-	return out;
-}
 
 
 HAPI.sprout = function(filePath) {
@@ -118,17 +79,9 @@ HAPI.sprout = function(filePath) {
 	var file = new HAPI.class.File(filePath);
 	HAPI.registerFile(file);
 
-	return file.isProcessed.then(function(){
-		var promises = file.includes.map(function(inc){
-			var path = inc.path;
-			// delete inc.path;
-			return HAPI.sprout(path).then(function(file){
-				inc.file = file;
-			});
-		});
-
-		// var promises = file.includes.map(HAPI.sprout);
-		return Promise.all(promises).then(function(){
+	return file.scopifyText().then(function(){
+		return Promise.all(file.includePaths.map(HAPI.sprout))
+		.then(function(){
 			return file;
 		});
 	}).catch(function(err){
@@ -139,22 +92,37 @@ HAPI.sprout = function(filePath) {
 
 
 
-HAPI.htmlify = function(file) {
-	file.unexitedText = file.rawText;
-	file.rawText = HAPI.exitHtml(file.rawText)
-
-	var out = HAPI.htmlifyScope(file).html;
-
-	out = `<link href='code_style.css' rel='stylesheet' type='text/css'>` + out;
-	out = HAPI.convertNonDisplayableHTMLChars(out);
-	return out;
-}
 
 
+
+
+
+
+
+
+
+
+
+
+/******************************************
+*
+*		Main Parser
+*
+*****************************************/
+
+
+
+
+
+//TODO: create special case for when non-inclusive starts end on or after charStart
 //TODO: progress regexs which don't fall into a scope to after the scope
+//TODO: get rid of match IDs, just pass on recent regex matches
+//continue to record matches by start position
+//find a way to make regexs not search passed a known start position
 //TODO: create an attribute for scopes which can interfere with the current ones end
-//use for cases where read through / skip is effecient
-HAPI.htmlifyScope = function(file, scopeInfo) {
+
+//use depthMode for cases where read through / skip is effecient
+HAPI.scopify = function(file, scopeInfo) {
 	//variable to be returned at end
 	var scopeChunk = new HAPI.class.ScopeChunk(file, scopeInfo);
 	
@@ -163,14 +131,16 @@ HAPI.htmlifyScope = function(file, scopeInfo) {
 	var allRegexs = file.allRegexs;
 
 	var thisScope = scopeChunk.scope;
-	var pointMatch = scopeChunk.pointMatch;
+	
 
 	//special case for matches that contain no sub space (ie. keywords, end after the match start)
-	if(pointMatch && thisScope.end == undefined) {
-		var text = pointMatch.text;
-		scopeChunk.html = "<"+thisScope.name+">"+text+"</"+thisScope.name+">";
-		scopeChunk.endIndex = pointMatch.index + text.length - 1;
-		return scopeChunk;
+	var startMatch = scopeChunk.startMatch;
+	if(startMatch && thisScope.end == undefined) {
+		// var text = pointMatch.text;
+		// scopeChunk.html = "<"+thisScope.name+">"+text+"</"+thisScope.name+">";
+		scopeChunk.endIndex = startMatch.index + startMatch.text.length - 1;
+		scopeChunk.complete();
+				return scopeChunk;
 	}
 
 
@@ -182,11 +152,14 @@ HAPI.htmlifyScope = function(file, scopeInfo) {
 
 
 	var addLooseText = function(endIndex){
-		if(thisScope && thisScope.startInclusive == false) {
-			charStart = Math.max(charStart, pointMatch.index + pointMatch.text.length);
-		}
+		charStart = Math.max(charStart, scopeChunk.startIndex);
+		
 		if(charStart < endIndex) {
-			scopeChunk.html += rawText.substring(charStart, endIndex);
+			scopeChunk.subChunks.push({
+				file: file,
+				startIndex: charStart,
+				endIndex: endIndex-1
+			})
 			charStart = endIndex;
 		}
 	}
@@ -247,7 +220,10 @@ HAPI.htmlifyScope = function(file, scopeInfo) {
 			
 			progressMatchPointID(thisScope.name, endMatchPointIDs, regex, soonestEnd);
 			var endPointID = endMatchPointIDs[thisScope.name];
-			scopeChunk.endIndex = regex.matchPoints[endPointID].index;
+			var endMatch = regex.matchPoints[endPointID];
+			if(endMatch == undefined)
+				console.error(regex.source, "pointID", endPointID, charStart, file.path, scopeChunk.startIndex, rawText.substr(scopeChunk.startIndex, 32));
+			scopeChunk.setCurrentEndMatch(endMatch);
 		}
 
 
@@ -262,24 +238,34 @@ HAPI.htmlifyScope = function(file, scopeInfo) {
 		let soonestScope;
 		let soonestScopeIndex = -42;
 		let soonestScopeMatchID;
-		for(var i in subScopes) {
-			var regex = allRegexs[subScopes[i].start];
-			var name = subScopes[i].name;
+		let soonestMatch;
+
+				for(var i in subScopes) {
+			var subScope = subScopes[i];
+			
+			var regex = allRegexs[subScope.start];
+			var name = subScope.name;
 			var matchNum = startMatchPointIDs[name];
+			var match = regex.matchPoints[matchNum];
 			
 
-			if(matchNum != -1) {
-				var scopeIndex = regex.matchPoints[matchNum].index;
+			if(match != undefined) {
+				var scopeIndex = match.index;
+				if(subScope.startInclusive == false)
+					scopeIndex += match.text.length;
+
 
 				if(soonestScope == undefined || scopeIndex < soonestScopeIndex
-				|| (scopeIndex == soonestScopeIndex && subScopes[i].priority > soonestScope.priority)){
-					soonestScope = subScopes[i];
+				|| (scopeIndex == soonestScopeIndex && subScope.priority > soonestScope.priority)){
+					soonestScope = subScope;
 					soonestScopeIndex = scopeIndex;
 					soonestScopeMatchID = matchNum;
+					soonestMatch = regex.matchPoints[matchNum];
 				}
 			}
 		}
 
+		
 		//if no subscopes exist, or the soonest one is after the end of this scope
 		//end the search
 		if(soonestScope == undefined || scopeChunk.endIndex <= soonestScopeIndex) {
@@ -293,6 +279,7 @@ HAPI.htmlifyScope = function(file, scopeInfo) {
 			startMatchPointIDs[soonestScope.name]++;
 
 			var nextScopeInfo = {
+				parentChunk: scopeChunk,
 				scope: soonestScope,
 				matchID: soonestScopeMatchID,
 				startMatchPointIDs: {},
@@ -306,11 +293,22 @@ HAPI.htmlifyScope = function(file, scopeInfo) {
 
 			//make sure to add any loose text (no scope)
 			//then use the outcome to find where the scope starts again next cycle
+			// if(soonestScopeIndex == charStart)
+				
 			addLooseText(soonestScopeIndex);
-			var outcome = HAPI.htmlifyScope(file, nextScopeInfo);
+			var outcome = HAPI.scopify(file, nextScopeInfo);
 
-			scopeChunk.html += outcome.html;
-			charStart = outcome.endIndex+1;
+			scopeChunk.subChunks.push(outcome);
+
+
+			
+			
+			//)};
+			//for cases where an end match encompases other end matches
+			if(scopeChunk.endMatch && scopeChunk.endIndex >= outcome.endIndex && scopeChunk.endMatch.index <= outcome.endIndex)
+				charStart = scopeChunk.endMatch.index;
+			else
+				charStart = outcome.endIndex+1;
 
 			for(name in outcome.endMatchPointUpdates)
 				endMatchPointIDs[name] = outcome.endMatchPointUpdates[name];
@@ -321,27 +319,10 @@ HAPI.htmlifyScope = function(file, scopeInfo) {
 	}
 
 	
-	//if this is a scoped case, do special things involving whether or not
-	//the text start and end fall in or out of the tags
-	//in either case, add the loose text to the output
-	if(thisScope != HAPI.scopes.root){
-		if(thisScope.endInclusive == false) {
-			var endMatchID = endMatchPointIDs[thisScope.name];
-			scopeChunk.endIndex -= allRegexs[thisScope.end].matchPoints[endMatchID].text.length;
-			// scopeChunk.endIndex -= thisScope.end.length;
-		}
-
-		addLooseText(scopeChunk.endIndex+1);
-
-		scopeChunk.html = "<"+thisScope.name+">"+scopeChunk.html+"</"+thisScope.name+">";
-
-		if(thisScope.startInclusive == false)
-			scopeChunk.html = pointMatch.text + scopeChunk.html;
-	}
-	else addLooseText(scopeChunk.endIndex+1);
 
 	scopeChunk.startMatchPointUpdates = startMatchPointIDs;
 	scopeChunk.endMatchPointUpdates = endMatchPointIDs;
+	scopeChunk.complete();
 	return scopeChunk;
 }
 
@@ -353,11 +334,30 @@ HAPI.htmlifyScope = function(file, scopeInfo) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+/******************************************
+*
+*		Class- ScopeChunk
+*
+*****************************************/
+
+
+
+
 HAPI.class = {};
 HAPI.class.ScopeChunk = function(file, scopeInfo) {
 	var THIS = this;
 	THIS.html = "";
-	THIS.subScopeChunks = [];
+	THIS.subChunks = [];
 	THIS.file = file;
 	THIS.scope = scopeInfo ? scopeInfo.scope : HAPI.scopes.root;
 
@@ -379,8 +379,12 @@ HAPI.class.ScopeChunk = function(file, scopeInfo) {
 		THIS.endMatchPointIDs = {}
 	}	
 	else {
-		THIS.pointMatch = allRegexs[THIS.scope.start].matchPoints[scopeInfo.matchID];
-		THIS.startIndex = THIS.pointMatch.index;
+		THIS.parentChunk = scopeInfo.parentChunk;
+		THIS.startMatch = allRegexs[THIS.scope.start].matchPoints[scopeInfo.matchID];
+		THIS.startIndex = THIS.startMatch.index;
+		if(THIS.scope.startInclusive == false)
+			THIS.startIndex += THIS.startMatch.text.length;
+
 		THIS.endIndex = -1;
 		THIS.startMatchPointIDs = scopeInfo.startMatchPointIDs;
 		THIS.endMatchPointIDs = scopeInfo.endMatchPointIDs;
@@ -391,63 +395,200 @@ HAPI.class.ScopeChunk = function(file, scopeInfo) {
 			allRegexs[keyString] = new RegExp(keyString, 'g');
 			allRegexs[keyString].matchPoints = [];
 		}
-		
 	}
 }
 
+HAPI.class.ScopeChunk.prototype.complete = function() {
+	var THIS = this;
+		if(THIS.isComplete != true) {
+		THIS.isComplete = true;	
+		var onComplete = THIS.scope.onComplete;
+		if(onComplete !== undefined)
+			onComplete(THIS);
+	}
+}
+
+HAPI.class.ScopeChunk.prototype.setCurrentEndMatch = function(endMatch) {
+	var THIS = this;
+
+	THIS.endMatch = endMatch;
+	THIS.endIndex = endMatch.index - 1;
+
+	if(THIS.scope.endInclusive)
+		THIS.endIndex += endMatch.text.length;
+}
+
+HAPI.class.ScopeChunk.prototype.getFirstOfName = function(subScopeName, startIndex) {
+	var THIS = this;
+	for(var i = startIndex || 0; i < THIS.subChunks.length; i++) {
+		var subChunk = THIS.subChunks[i];
+				if(subChunk.scope && subChunk.scope.name == subScopeName)
+			return { chunk: subChunk, index: i };
+	}
+}
+
+HAPI.class.ScopeChunk.prototype.getHtml = function() {
+	// return [this.html];
+	var THIS = this;
+	var outStrings = [];
+
+	if(THIS.startMatch && THIS.startInclusive == false) {
+		var firstSubChunk = THIS.subChunks[0];
+		if(firstSubChunk && firstSubChunk.startIndex > THIS.startIndex) {
+			var preText = THIS.file.rawText.substring(THIS.startIndex, firstSubChunk.startIndex);
+			outStrings.push(HAPI.exitHtml(preText));
+			// outStrings.push(preText);
+		}
+	}
+	outStrings.push("<"+THIS.scope.name+">");
+
+
+	if(THIS.subChunks.length == 0) {
+		var allText = THIS.file.rawText.substring(THIS.startIndex, THIS.endIndex+1)
+		outStrings.push(HAPI.exitHtml(allText));
+		// outStrings.push(allText);
+	}
+	else {
+		THIS.subChunks.forEach((subScopeChunk) => {
+			if(subScopeChunk.scope) {
+				var subStrings = subScopeChunk.getHtml();
+				subStrings.forEach((subString) => {
+					outStrings.push(subString);
+				})
+			}
+			else {
+				var start = subScopeChunk.startIndex;
+				var end =  subScopeChunk.endIndex + 1;
+				var chunklessText = subScopeChunk.file.rawText.substring(start, end);
+				outStrings.push(HAPI.exitHtml(chunklessText));
+				// outStrings.push(chunklessText);
+			}
+		});
+
+		var lastSubChunk = HAPI.getLast(THIS.subChunks);
+		var leftOvers = THIS.file.rawText.substring(lastSubChunk.endIndex+1, THIS.endIndex+1);
+		outStrings.push(HAPI.exitHtml(leftOvers));
+		// outStrings.push(leftOvers);
+	}
+
+	outStrings.push("</"+THIS.scope.name+">");
+	return outStrings;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/******************************************
+*
+*		Class- File
+*
+*****************************************/
 
 
 
 
 HAPI.class.File = function(filePath) {
-	
-
 	var THIS = this;
 	THIS.path = filePath;
 	THIS.includes = [];
-	THIS.rawText = "";
+	// THIS.includePaths = [];
+	THIS.rawText;
 	THIS.allRegexs = {};
-	THIS.isProcessed = new Promise(function(resolve, reject) {
 
-		fs.readFile(filePath, function(err, data){
-		    if(err){
-		    	console.error("could not find", filePath);
-		        reject();
-		    } else {
-		    	THIS.rawText = data+"";
-		    	THIS.processText();
-		    	resolve();
-		    }
-		});	
-	});
+	var nonHeader = filePath.replace(/(hpp|h)$/i, "cpp");
+	if(nonHeader != filePath)
+		THIS.includes.push(pathTool.basename(nonHeader));
 }
 
 
 
 
 
-HAPI.class.File.prototype.processText = function() {
+HAPI.class.File.prototype.scopifyText = function() {
 	var THIS = this;
-
-	var includes = THIS.rawText.match(/#include.+/g);
-	if(includes) {
-		includes.forEach(function(incLine){
-			var addMe = {};
-			addMe.rawText = incLine;
-
-			incLine = incLine.match(/\".+\"/);
-			if(incLine && incLine[0]) {
-				incLine = incLine[0];
-				incLine = incLine.substr(1, incLine.length-2);
-
-				addMe.target = incLine;
-				addMe.path = THIS.getRelativePath(incLine);
-
-
-				THIS.includes.push(addMe);
-			}
+	if(THIS.rawText == undefined) {
+		return fs.promise.readFile(THIS.path)
+		.then((data) => {
+			// THIS.rawText = HAPI.exitHtml(data+"");
+			THIS.rawText = data+"";
+			THIS.scopeChunk = HAPI.scopify(THIS);
+			THIS.includePaths = THIS.includes.map((include) => {
+				return THIS.getRelativePath(include);
+			});
 		});
 	}
+
+	else return Promise.resolve();
+
+	// THIS.rawText = data+"";
+	// THIS.scopifyText();
+
+	// new Promise(function(resolve, reject) {
+
+	// 	fs.readFile(filePath, function(err, data){
+	// 	    if(err){
+		// 	        reject();
+	// 	    } else {
+	// 	    	THIS.rawText = data+"";
+	// 	    	THIS.scopifyText();
+	// 	    	resolve();
+	// 	    }
+	// 	});	
+	// });
+
+	// var includes = THIS.rawText.match(/#include.+/g);
+	// if(includes) {
+	// 	includes.forEach(function(incLine){
+	// 		var addMe = {};
+	// 		addMe.rawText = incLine;
+
+	// 		incLine = incLine.match(/\".+\"/);
+	// 		if(incLine && incLine[0]) {
+	// 			incLine = incLine[0];
+	// 			incLine = incLine.substr(1, incLine.length-2);
+
+	// 			addMe.target = incLine;
+	// 			addMe.path = THIS.getRelativePath(incLine);
+
+
+	// 			THIS.includes.push(addMe);
+	// 		}
+	// 	});
+	// }
 };
 
 
@@ -468,47 +609,59 @@ HAPI.class.File.prototype.getRelativePath = function(path) {
 		}
 	});
 
-	return baseDir.reduce(function(sum, value){
-		return sum + "/" + value;
-	});
+	return baseDir.join("/");
 };
 
 
+HAPI.class.File.prototype.addInclude = function(addMe) {
+	if(this.includes.indexOf(addMe) == -1)
+		this.includes.push(addMe);
+}
 
 
 
 
 
+
+/******************************************
+*
+*		HTML Tools
+*
+*****************************************/
 
 
 HAPI.exitHtml = function(exitMe) {
 	// exitMe = exitMe.replace("<!--", '');
-	exitMe = exitMe.replace(/&/g, '&amp;');
-	exitMe = exitMe.replace(/</g, '&lt;');
-	exitMe = exitMe.replace(/>/g, '&gt;');
+	exitMe = exitMe.replace(/&/g, '&amp;')
+	.replace(/</g, '&lt;')
+	.replace(/>/g, '&gt;');
 	
-	var tabs = exitMe.match(/\t+/g);
 
-	if(tabs){
-		var likelyTabAmount = tabs[tabs.length - 1].length + 1;
-		var minAmount = -1;
-		for(var i = 0; i < tabs.length; i++) {
-			var numTabs = tabs[i].length;
-			if(numTabs < minAmount || i == 0) {
-				minAmount = numTabs;
-			}			
-		}
-
-		var willRemove = Math.max(likelyTabAmount, minAmount);
-		var regex = new RegExp("\n\t{"+willRemove+"}", "g");
-
-		exitMe = exitMe.replace(regex, '\n');
-	}
-
-	return exitMe;
+	return exitMe.replace(/\t/g, '&emsp;')
+	.replace(/\n/g, '<br>\n');
+	// return exitMe;
 }
 
-HAPI.convertNonDisplayableHTMLChars = function(showMe) {
+HAPI.htmlifySpacing = function(showMe) {
+
+	// var tabs = showMe.match(/\t+/g);
+
+	// if(tabs){
+	// 	var likelyTabAmount = tabs[tabs.length - 1].length + 1;
+	// 	var minAmount = -1;
+	// 	for(var i = 0; i < tabs.length; i++) {
+	// 		var numTabs = tabs[i].length;
+	// 		if(numTabs < minAmount || i == 0) {
+	// 			minAmount = numTabs;
+	// 		}			
+	// 	}
+
+	// 	var willRemove = Math.max(likelyTabAmount, minAmount);
+	// 	var regex = new RegExp("\n\t{"+willRemove+"}", "g");
+
+	// 	showMe = showMe.replace(regex, '\n');
+	// }
+
 	return showMe.replace(/\t/g, '&emsp;')
 	.replace(/\n/g, '<br>\n');
 }
@@ -516,9 +669,77 @@ HAPI.convertNonDisplayableHTMLChars = function(showMe) {
 
 
 
+
+
+
+
+
+
+
+/******************************************
+*
+*		UI Stuff
+*
+*****************************************/
+
 HAPI.viewerDir = "default_viewer";
 HAPI.assertViewer = function(filePath) {
 	return fs.copyFolder(HAPI.viewerDir, "renders", true)
+}
+
+HAPI.includeDropID = 0;
+HAPI.createIncludeOrderOverview = function(filePath, map, state) {
+	var out = "";
+
+	if(state === undefined) {
+		state = { added: [] };	
+		out += `<link href='style.css' rel='stylesheet' type='text/css'>`;
+		out += "<h1>Include Path Overview</h1>";
+	}
+	
+
+	if(state.added.indexOf(filePath) != -1){
+		filePath = filePath.replace("test/", '');
+		return "<class><a href='../"+filePath+".html' target='file_content' class='back_ref'>"+filePath+"</a></class>";
+	}
+	state.added.push(filePath);
+	
+	var file = map[filePath];
+	
+	out += "<class>\n";
+	filePath = filePath.replace("test/", '');
+
+	out += "<a href='../"+filePath+".html' target='file_content'>"+filePath+"</a>";
+
+	var includesHtml = "";
+	var splitName = pathTool.basename(filePath).split('.');
+	file.includePaths.forEach(function(inc) {
+		var incSplitName = pathTool.basename(inc).split('.');
+		if(splitName[0] == incSplitName[0]){
+			if(splitName[1] != incSplitName[1]){
+				inc = inc.replace("test/", '');
+				out += "<a href='../"+inc+".html' target='file_content' class='sameName'>(."+incSplitName[1]+")</a>";
+			}
+
+			else console.error("file includes in self", filePath);
+		}
+		else {
+			var addMe = HAPI.createIncludeOrderOverview(inc, map, state);
+			if(addMe)
+				includesHtml += addMe;
+		}		
+	});
+
+	if(includesHtml.length){
+		var ID = "inc_drop_"+HAPI.includeDropID++;
+		out += "<input type='checkbox' id='"+ID;
+		out += state.added.length == 1 && false ? "'' checked>" : "'>";
+		out += "<label for='"+ID+"'></label>";
+		out += "\n<includes>"+includesHtml+"</includes>\n";
+	}
+
+	out += "</class>\n"
+	return out;
 }
 
 
@@ -528,10 +749,45 @@ HAPI.assertViewer = function(filePath) {
 
 
 
+
+
+
+
+fs.promise = {};
+fs.promise.readFile = function(filePath) {
+	return new Promise(function(resolve, reject) {
+		fs.readFile(filePath, function(err, data){
+		    if(err){
+		    	console.error("could not find", filePath);
+		        reject(err);
+		    } else {
+		    	resolve(data);
+		    }
+		});	
+	});
+}
+
+fs.promise.writeFile = function(outPath, data) {
+	return new Promise(function(resolve) {
+		fs.writeFile(outPath, data, resolve);	
+	});
+}
+
+fs.promise.lstat = function(filePath) {
+	return new Promise(function(resolve, reject) {
+		fs.lstat(filePath, function(err, stats){
+			if(err) reject();
+			else resolve(stats);
+		});
+	});
+}
+
+
+
 fs.copyFolder = function(sourcePath, targetPath, startAtItems, deepCopy, baseSourcePath) {
 	baseSourcePath = baseSourcePath || sourcePath;
 	// if(baseSourcePath === undefined && sourcePath && startAtItems == false)
-	// 	baseSourcePath = path.basename(sourcePath);
+	// 	baseSourcePath = pathTool.basename(sourcePath);
 	
 
 	targetPath = targetPath || "";
@@ -541,8 +797,7 @@ fs.copyFolder = function(sourcePath, targetPath, startAtItems, deepCopy, baseSou
 	// if(sourcePath && startAtItems == false)
 	// 	targetPath += "/"+ 
 
-	console.log("copyFromTo", sourcePath, targetPath);
-
+	
 	fs.ensureDirectoryExistence(targetPath);
 
 	return new Promise(function(resolve) {
@@ -556,9 +811,8 @@ fs.copyFolder = function(sourcePath, targetPath, startAtItems, deepCopy, baseSou
 			files.forEach(function(fileName){
 				var targetDir = targetPath+"/"+fileName;
 				var sourceDir = sourcePath+"/"+fileName;
-				console.log("dircopyFromTo", targetDir, sourceDir);
-
-				copyPromises.push(HAPI.lstat(sourceDir)
+				
+				copyPromises.push(fs.promise.lstat(sourceDir)
 				.then((stats) => {
 					if(stats.isDirectory()) {
 						if(deepCopy) {
@@ -582,8 +836,8 @@ fs.copyFolder = function(sourcePath, targetPath, startAtItems, deepCopy, baseSou
 
 
 fs.ensureDirectoryExistence = function(filePath) {
-	console.log(filePath);
-    var dirname = path.dirname(filePath);
+		filePath += "FAKE_FILE_HACK";
+    var dirname = pathTool.dirname(filePath);
     if (fs.existsSync(dirname)) {
     	return true;
     }
@@ -593,8 +847,6 @@ fs.ensureDirectoryExistence = function(filePath) {
 
 
 fs.copyFile = function(source, target) {
-	
-
 	return new Promise(function(resolve, reject){
 	  	var cbCalled = false;
 
@@ -627,6 +879,11 @@ fs.copyFile = function(source, target) {
 	    }
 	});
 }
+
+HAPI.getLast = function(arr){
+	return arr[arr.length-1];
+}
+
 
 
 HAPI.run().then(function(){

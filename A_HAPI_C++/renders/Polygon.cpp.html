@@ -1,0 +1,38 @@
+<link href='code_style.css' rel='stylesheet' type='text/css'><file><comment>// Example Project</comment><br>
+<comment>// Author: Jake Lane</comment><br>
+<comment>// Student ID: a1686679</comment><br>
+<comment>// Description: Polygon class</comment><br>
+<br>
+<include><keyComp>#include</keyComp> <string>"Polygon.hpp"</string></include><br>
+<br>
+<comment>// Constructor for Polygon</comment><br>
+<fnDef><fnHeaderDef>Polygon::<fnCall><fnName>Polygon</fnName><args>(<keyVar>int</keyVar> height, <keyVar>int</keyVar> width)</args></fnCall>: <fnCall><fnName>m_height</fnName><args>(height)</args></fnCall>, <fnCall><fnName>m_width</fnName><args>(width)</args></fnCall> </fnHeaderDef><fnDefBlock>{}</fnDefBlock></fnDef><br>
+<br>
+<comment>// Destructor</comment><br>
+<fnDef><fnHeaderDef>Polygon::<fnCall><fnName>~Polygon</fnName><args>()</args></fnCall> </fnHeaderDef><fnDefBlock>{}</fnDefBlock></fnDef><br>
+<br>
+<comment>// Return the polygon height</comment><br>
+<fnDef><fnHeaderDef><keyVar>int</keyVar> Polygon::<fnCall><fnName>getHeight</fnName><args>()</args></fnCall> </fnHeaderDef><fnDefBlock>{<br>
+&emsp;<keyComp>return</keyComp> m_height;<br>
+}</fnDefBlock></fnDef><br>
+<br>
+<comment>// Return the polygon width</comment><br>
+<fnDef><fnHeaderDef><keyVar>int</keyVar> Polygon::<fnCall><fnName>getWidth</fnName><args>()</args></fnCall> </fnHeaderDef><fnDefBlock>{<br>
+&emsp;<keyComp>return</keyComp> m_width;<br>
+}</fnDefBlock></fnDef><br>
+<br>
+<comment>// Set the polygon height</comment><br>
+<fnDef><fnHeaderDef><keyVar>void</keyVar> Polygon::<fnCall><fnName>setHeight</fnName><args>(<keyVar>int</keyVar> height)</args></fnCall> </fnHeaderDef><fnDefBlock>{<br>
+&emsp;m_height = height;<br>
+}</fnDefBlock></fnDef><br>
+<br>
+<comment>// Set the polygon width</comment><br>
+<fnDef><fnHeaderDef><keyVar>void</keyVar> Polygon::<fnCall><fnName>setWidth</fnName><args>(<keyVar>int</keyVar> width)</args></fnCall> </fnHeaderDef><fnDefBlock>{<br>
+&emsp;m_width = width;<br>
+}</fnDefBlock></fnDef><br>
+<br>
+<comment>// This runs if there is no child class (polymorphism) so we return an invalid area</comment><br>
+<fnDef><fnHeaderDef><keyVar>float</keyVar> Polygon::<fnCall><fnName>area</fnName><args>()</args></fnCall> </fnHeaderDef><fnDefBlock>{<br>
+&emsp;<keyComp>return</keyComp> -1;<br>
+}</fnDefBlock></fnDef><br>
+</file>

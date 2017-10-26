@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+	
+		
+		<input id="box1" type="checkbox"><label for="box1"></label>
+		
+		<includes>
+			<a href="">lalalas</a>
+		</includes>
+		
+		
+		<!-- <a href="#test" id="link"><label for="box1">tenanean</label></a> -->
+
+</body>
+
+
+<style>
+label {
+	/*pointer-events: none;*/
+}
+
+label > * {
+	/*pointer-events:none;*/
+}
+	/*label {
+		display: inline-block;
+		height: 0px;
+		width: 0px;
+		border-style: solid;
+		border-color: transparent;
+		border-width: 6px 0px 6px 10px;
+		border-left-color: black;
+		transition: transform ease-in 0.1s;
+	}
+
+	input {
+		display: none;
+	}*/
+
+	a:focus {
+		background-color: red;
+	}
+
+	a {
+		display: inline-block;
+		overflow: hidden;
+	}
+
+	input[type=checkbox]:checked ~ label {
+		transform: rotate(90deg);
+	}
+
+	input[type=checkbox]:not(:checked) ~ includes{
+		line-height: 0px;
+		/*animation: fade_and_shrink 0.1s ease-in;*/
+		/*animation-fill-mode: forwards;*/
+	}
+
+	@keyframes fade_and_shrink {
+		0% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0;
+		}
+		100% {
+			font-size: 0;
+			padding: 0px;
+			margin: 0px;
+			opacity: 0;
+		}
+	}
+
+	@keyframes grow_and_appear {
+		0% {
+			padding: 0px;
+			margin: 0px;
+			font-size: 0;
+			opacity: 0;
+		}
+		50% {
+			font-size: inherit;
+		}
+		100% {
+			opacity: 1;
+		}
+	}
+
+	includes {
+		display: block;
+		background-color: #f88;
+		animation: grow_and_appear 0.25s ease-in;
+		animation-fill-mode: forwards;
+	}
+</style>
+</html>

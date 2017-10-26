@@ -1,4 +1,4 @@
-<link href='code_style.css' rel='stylesheet' type='text/css'><comment>// Example Project</comment><br>
+<link href='code_style.css' rel='stylesheet' type='text/css'><file><comment>// Example Project</comment><br>
 <comment>// Author: Jake Lane</comment><br>
 <comment>// Student ID: a1686679</comment><br>
 <comment>// Description: Rectangle header</comment><br>
@@ -6,17 +6,18 @@
 <keyComp>#ifndef</keyComp> RECTANGLE_H_<br>
 <keyComp>#define</keyComp> RECTANGLE_H_<br>
 <br>
-<include><keyComp>#include</keyComp> "Polygon.hpp"</include><br>
+<include><keyComp>#include</keyComp> <string>"Polygon.hpp"</string></include><br>
 <br>
 <classDef><classNameDef><keyClass>class</keyClass> Rectangle</classNameDef>: <inheritance><keyClass>public</keyClass> Polygon </inheritance><classDefBlock>{<br>
 <classFnPrivacyBlock><keyClass>public</keyClass>:<br>
 &emsp;<comment>// Constructor</comment><br>
-&emsp;<classFnDef>Rectangle<classFnParams>(<keyVar>int</keyVar> height, <keyVar>int</keyVar> width)</classFnParams></classFnDef>;<br>
+&emsp;<fnCall><fnName>Rectangle</fnName><args>(<keyVar>int</keyVar> height, <keyVar>int</keyVar> width)</args></fnCall>;<br>
 &emsp;<comment>// Trivial Destructor</comment><br>
-&emsp;<classFnDef>~Rectangle<classFnParams>()</classFnParams></classFnDef>;<br>
+&emsp;<fnCall><fnName>~Rectangle</fnName><args>()</args></fnCall>;<br>
 <br>
 &emsp;<comment>// Area method (polymorphic)</comment><br>
-&emsp;<keyVar>float</keyVar> <classFnDef>area<classFnParams>()</classFnParams></classFnDef>;</classFnPrivacyBlock><br>
-}</classDefBlock>;</classDef><br>
+&emsp;<keyVar>float</keyVar> <fnCall><fnName>area</fnName><args>()</args></fnCall>;<br>
+</classFnPrivacyBlock>}</classDefBlock>;</classDef><br>
 <br>
 <keyComp>#endif</keyComp> <comment>// RECTANGLE_H_</comment><br>
+</file>

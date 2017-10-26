@@ -1,49 +1,50 @@
-<link href='code_style.css' rel='stylesheet' type='text/css'><comment>// Example Project</comment><br>
+<link href='code_style.css' rel='stylesheet' type='text/css'><file><comment>// Example Project</comment><br>
 <comment>// Description: Main Program</comment><br>
 <br>
 <include><keyComp>#include</keyComp> &lt;iostream&gt;</include><br>
 <br>
-<include><keyComp>#include</keyComp> "Polygon.hpp"</include><br>
-<include><keyComp>#include</keyComp> "Rectangle.hpp"</include><br>
-<include><keyComp>#include</keyComp> "Triangle.hpp"</include><br>
+<include><keyComp>#include</keyComp> <string>"Polygon.hpp"</string></include><br>
+<include><keyComp>#include</keyComp> <string>"Rectangle.hpp"</string></include><br>
+<include><keyComp>#include</keyComp> <string>"Triangle.hpp"</string></include><br>
 <br>
 <comment>// Prints out some details on a Polygon.</comment><br>
 <comment>// Note that it's not passing through a particular Polygon (like Triangle or Rectangle), rather it's the parent.</comment><br>
-<keyVar>void</keyVar> pr<keyVar>int</keyVar>Details(Polygon* shape) {<br>
-&emsp;std::cout &lt;&lt; "Height: " &lt;&lt; shape-&gt;getHeight();<br>
-&emsp;std::cout &lt;&lt; ", Width: " &lt;&lt; shape-&gt;getWidth();<br>
+<fnDef><fnHeaderDef><keyVar>void</keyVar> <fnCall><fnName>printDetails</fnName><args>(Polygon* shape)</args></fnCall> </fnHeaderDef><fnDefBlock>{<br>
+&emsp;std::cout &lt;&lt; <string>"Height: "</string> &lt;&lt; shape-&gt;<fnCall><fnName>getHeight</fnName><args>()</args></fnCall>;<br>
+&emsp;std::cout &lt;&lt; <string>", Width: "</string> &lt;&lt; shape-&gt;<fnCall><fnName>getWidth</fnName><args>()</args></fnCall>;<br>
 <br>
 &emsp;<comment>// Pay particular attention to the results of area(). Even though it's a Polygon, the children produce different results for the function call.</comment><br>
-&emsp;std::cout &lt;&lt; ", Area: " &lt;&lt; shape-&gt;area();<br>
+&emsp;std::cout &lt;&lt; <string>", Area: "</string> &lt;&lt; shape-&gt;<fnCall><fnName>area</fnName><args>()</args></fnCall>;<br>
 &emsp;std::cout &lt;&lt; std::endl;<br>
-}<br>
+}</fnDefBlock></fnDef><br>
 <br>
-<keyVar>int</keyVar> main() {<br>
+<fnDef><fnHeaderDef><keyVar>int</keyVar> <fnCall><fnName>main</fnName><args>()</args></fnCall> </fnHeaderDef><fnDefBlock>{<br>
 &emsp;<comment>// Create a rectangle on the heap with a height of 5 and a width of 6</comment><br>
-&emsp;Polygon* rectangle = <keyComp>new</keyComp> Rectangle(5, 6);<br>
+&emsp;Polygon* rectangle = <keyComp>new</keyComp> <fnCall><fnName>Rectangle</fnName><args>(5, 6)</args></fnCall>;<br>
 &emsp;<comment>// Print information using getters and method</comment><br>
-&emsp;pr<keyVar>int</keyVar>Details(rectangle);<br>
+&emsp;<fnCall><fnName>printDetails</fnName><args>(rectangle)</args></fnCall>;<br>
 &emsp;<comment>// Set the height to 10 with a setter</comment><br>
-&emsp;rectangle-&gt;setHeight(10);<br>
+&emsp;rectangle-&gt;<fnCall><fnName>setHeight</fnName><args>(10)</args></fnCall>;<br>
 &emsp;<comment>// Set the width to 10 with a setter</comment><br>
-&emsp;rectangle-&gt;setWidth(10);<br>
+&emsp;rectangle-&gt;<fnCall><fnName>setWidth</fnName><args>(10)</args></fnCall>;<br>
 &emsp;<comment>// Print information using getters and method</comment><br>
-&emsp;pr<keyVar>int</keyVar>Details(rectangle);<br>
+&emsp;<fnCall><fnName>printDetails</fnName><args>(rectangle)</args></fnCall>;<br>
 &emsp;<comment>// Cleanup the memory in the heap</comment><br>
 &emsp;<keyComp>delete</keyComp> rectangle;<br>
 <br>
 &emsp;<comment>// Create a triangle on the heap with a height of 7 and a width of 9</comment><br>
-&emsp;Polygon* triangle = <keyComp>new</keyComp> Triangle(7, 9);<br>
+&emsp;Polygon* triangle = <keyComp>new</keyComp> <fnCall><fnName>Triangle</fnName><args>(7, 9)</args></fnCall>;<br>
 &emsp;<comment>// Print information using getters and method</comment><br>
-&emsp;pr<keyVar>int</keyVar>Details(triangle);<br>
+&emsp;<fnCall><fnName>printDetails</fnName><args>(triangle)</args></fnCall>;<br>
 &emsp;<comment>// Set the height to 3 with a setter</comment><br>
-&emsp;triangle-&gt;setHeight(3);<br>
+&emsp;triangle-&gt;<fnCall><fnName>setHeight</fnName><args>(3)</args></fnCall>;<br>
 &emsp;<comment>// Set the width to 4 with a setter</comment><br>
-&emsp;triangle-&gt;setWidth(4);<br>
+&emsp;triangle-&gt;<fnCall><fnName>setWidth</fnName><args>(4)</args></fnCall>;<br>
 &emsp;<comment>// Print information using getters and method</comment><br>
-&emsp;pr<keyVar>int</keyVar>Details(triangle);<br>
+&emsp;<fnCall><fnName>printDetails</fnName><args>(triangle)</args></fnCall>;<br>
 &emsp;<comment>// Cleanup the memory in the heap</comment><br>
 &emsp;<keyComp>delete</keyComp> triangle;<br>
 <br>
 &emsp;<keyComp>return</keyComp> 0;<br>
-}<br>
+}</fnDefBlock></fnDef><br>
+</file>

@@ -1,1 +1,0 @@
-{"root":"test/main.cpp","test/main.cpp":{"includes":["test/Polygon.hpp","test/Rectangle.hpp","test/Triangle.hpp"]},"test/Polygon.hpp":{"includes":[]},"test/Rectangle.hpp":{"includes":["test/Polygon.hpp"]},"test/Triangle.hpp":{"includes":["test/Polygon.hpp"]}}

@@ -2,7 +2,7 @@
 <html>
 <head>
 	<!-- <title>API Viewer</title> -->
-	<script type="text/javascript" src="ajax.js"></script>
+	<!-- <script type="text/javascript" src="ajax.js"></script> -->
 
 	<script>
 		// Ajax.get("overview.json").then(function(request){
@@ -140,11 +140,27 @@ body, html {
 
 
 	content {
-		display: grid;
+		display: flex;
 		height: 100%;
 		width: 100%;
-		grid-template-columns: 200px auto;
+		/*grid-template-columns: auto auto;*/
 	}
+
+		iframe {
+			border: 0px;
+			
+		}
+
+		#overview {
+			width: 200px;
+			border-right: 3px solid #666;
+			resize:horizontal;
+    		overflow:auto; 
+		}
+
+		#file_content {
+			flex-grow: 1;
+		}
 
 	
 </style>

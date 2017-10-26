@@ -16,8 +16,18 @@ HAPI.txtListToRegExpString = function(filePath) {
 HAPI.scopes = {};
 HAPI.scopes.root = {
 	name: "file",
-	allowedSubScopes: ["include", "classDef", "keyComp", "keyClass", "keyVar", "comment"]
+	allowedSubScopes: ["include", "fnDef", "classDef", "string", "keyComp", "keyClass", "keyVar", "comment"]
 }
+
+// HAPI.scopes.roots = {}
+// HAPI.scopes.roots["cpp"] = {
+// 	name: "cppFile",
+// 	allowedSubScopes: ["include", "fnDef", "string", "keyComp", "keyClass", "keyVar", "comment"]
+// }
+// HAPI.scopes.roots["h"] = HAPI.scopes.roots["hpp"] = {
+// 	name: "cppFile",
+// 	allowedSubScopes: ["include", "fnDef", "string", "keyComp", "keyClass", "keyVar", "comment"]
+// }
 
 
 HAPI.scopes.list = [
@@ -31,26 +41,32 @@ HAPI.scopes.list = [
 	},
 		{
 			name: "TODO",
-			start:  "//TODO:",
+			start:  "TODO:",
 			startInclusive: true,
-			end: ".(?=\n)",
-			endInclusive : true,
-
+			end: "\n",
+			endInclusive : false,
 		},
 
+	{
+		name: "string",
+		start:  `\"`,
+		startInclusive: true,
+		end: `([^\\\\]\")|$`,
+		endInclusive : true,
+	},
 	{
 		name: "include",
 		start:  "#include",
 		startInclusive: true,
 		end: "\n",
 		endInclusive: false,
-		allowedSubScopes: ["keyComp"]
+		allowedSubScopes: ["keyComp", "string"]
 	},
 	{
 		name: "classDef",
 		start: "class",
 		startInclusive: true,
-		end: "\n|;",
+		end: "}|;",
 		endInclusive: true,
 		allowedSubScopes: ["classNameDef", "inheritance", "classDefBlock", "comment"]
 	},
@@ -84,26 +100,82 @@ HAPI.scopes.list = [
 				name: "classFnPrivacyBlock",
 				start: "(public|private|protected)\\s*:",
 				startInclusive: true,
-				end: "((public|private|protected)\\s*:)|([\n.](?=\}))",
+				end: "((public|private|protected)\\s*:)|}",
 				endInclusive: false,
-				allowedSubScopes: ["classFnDef", "keyComp", "keyClass", "keyVar", "comment"]
+				allowedSubScopes: ["fnCall", "keyComp", "keyClass", "keyVar", "comment"]
 			},
+				// {
+				// 	name: "classFnDeclaration",
+				// 	start: "[~\\w\\d](?=([\\w\\d]*\\())",
+				// 	startInclusive: true,
+				// 	end: ";",
+				// 	endInclusive: false,
+				// 	allowedSubScopes: ["classFnParams", "keyComp", "keyClass", "keyVar", "comment"]
+				// },
+				// 	{
+				// 		name: "classFnParams",
+				// 		start: "\\(",
+				// 		startInclusive: true,
+				// 		end: "\\)",
+				// 		endInclusive: true,
+				// 		allowedSubScopes: ["keyComp", "keyClass", "keyVar", "comment", "num"]
+				// 	},
+
+	{
+		name: "fnDef",
+		start: "\\w.*\\(",
+		startInclusive: true,
+		end: "}",
+		endInclusive: true,
+		allowedSubScopes: ["fnHeaderDef", "fnDefBlock", "keyComp", "keyClass", "keyVar", "comment"]
+	},
+
+		{
+			name: "fnHeaderDef",
+			start: "\\w",
+			startInclusive: true,
+			end: "\\{",
+			endInclusive: false,
+			allowedSubScopes: ["fnCall", "keyComp", "keyClass", "keyVar", "comment"]
+		},
+			
+		{
+			name: "fnDefBlock",
+			start: "{",
+			startInclusive: true,
+			end: "}",
+			endInclusive: true,
+			allowedSubScopes: ["fnCall", "keyComp", "keyClass", "keyVar", "comment", "string"]
+		},
+
+			{
+				name: "fnCall",
+				start: "[^\\w~](?=[A-Za-z_~]\\w*\\s*\\()",  //\W[A-Za-z_]\w*\s*\(
+				startInclusive: false,
+				end: "\\)",
+				endInclusive: true,
+				allowedSubScopes: ["fnName", "args", "keyComp", "keyClass", "keyVar", "comment", "string"]
+			},
+
 				{
-					name: "classFnDef",
-					start: "[~\\w\\d](?=([\\w\\d]*\\())",
+					name: "fnName",
+					start: "[A-Za-z_~]",  //\W[A-Za-z_]\w*\s*\(
 					startInclusive: true,
-					end: ";",
+					end: "\\(",
 					endInclusive: false,
-					allowedSubScopes: ["classFnParams", "keyComp", "keyClass", "keyVar", "comment"]
+					// allowedSubScopes: ["keyComp", "keyClass", "keyVar", "comment"]
 				},
-					{
-						name: "classFnParams",
-						start: "\\(",
-						startInclusive: true,
-						end: "\\)",
-						endInclusive: true,
-						allowedSubScopes: ["keyComp", "keyClass", "keyVar", "comment"]
-					},
+
+				{
+					name: "args",
+					start: "\\(",
+					startInclusive: true,
+					end: "\\)",
+					endInclusive: true,
+					allowedSubScopes: ["keyComp", "keyClass", "keyVar", "comment", "num"]
+				},
+
+
 
 	{
 		name: "keyComp",
@@ -116,14 +188,38 @@ HAPI.scopes.list = [
 	{
 		name: "keyVar",
 		start: HAPI.txtListToRegExpString("var_keywords.txt")
-	}
+	},
+	// {
+	// 	name: "num",
+	// 	start: "\\W(?=\\d)",
+	// 	startInclusive: false,
+	// 	end: "\\d(?=\\W)",
+	// 	endInclusive: true,
+	// },
+
 ]
 
 HAPI.scopes.byID = {};
 HAPI.scopes.list.forEach(function(scope, index) {
 	scope.priority = HAPI.scopes.list.length - index;
 	HAPI.scopes.byID[scope.name] = scope;
+
+	if(scope.end == undefined)
+		scope.startInclusive = true;
 })
+
+
+HAPI.scopes.byID["include"].onComplete = function(scopeChunk) {
+	console.log("doing On complete");
+
+	var includeTarget = scopeChunk.getFirstOfName("string");
+	if(includeTarget) {
+		var chunk = includeTarget.chunk;
+		var include = chunk.file.rawText.substring(chunk.startIndex+1, chunk.endIndex);
+		console.log("adding file", include);
+		chunk.file.addInclude(include);
+	}
+}
 
 
 
