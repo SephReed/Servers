@@ -1,0 +1,231 @@
+<link href='public/code_style.css' rel='stylesheet' type='text/css'><script type="text/javascript" src="public/file_view.js"></script><file><include><keyComp>#include</keyComp> <string>"CommandLineParams.h"</string></include><br>
+<include><keyComp>#include</keyComp> <string>"interfaces/components/TabbedComponent.h"</string></include><br>
+<include><keyComp>#include</keyComp> <string>"interfaces/components/InputComponent.h"</string></include><br>
+<include><keyComp>#include</keyComp> <string>"environment/Environment.h"</string></include><br>
+<include><keyComp>#include</keyComp> <string>"Log.h"</string></include><br>
+<include><keyComp>#include</keyComp> <string>"URL.h"</string></include><br>
+<include><keyComp>#include</keyComp> <string>"WebResource.h"</string></include><br>
+<include><keyComp>#include</keyComp> <string>"tlsf.h"</string></include><br>
+<include><keyComp>#include</keyComp> <string>"CFGFileParser.h"</string></include><br>
+<include><keyComp>#include</keyComp> <string>"browser.h"</string></include><br>
+<br>
+<include><keyComp>#include</keyComp> <string>"interfaces/graphical/renderers/glfw/opengl.h"</string></include><br>
+<include><keyComp>#include</keyComp> <string>"parsers/images/netpbm/pnm.h"</string></include><br>
+<br>
+<include><keyComp>#include</keyComp> &lt;ctime&gt;</include><br>
+<include><keyComp>#include</keyComp> &lt;iostream&gt;</include><br>
+<include><keyComp>#include</keyComp> &lt;sys/stat.h&gt;</include><br>
+<include><keyComp>#include</keyComp> &lt;string.h&gt;</include><br>
+<br>
+<keyComp>#if</keyComp>def _WIN32<br>
+extern <string>"C"</string><block>{<br>
+ &nbsp;&nbsp; <keyVar>void</keyVar> <fnCall><fnName>init_heap</fnName><args>()</args></fnCall>;<br>
+}</block><br>
+<keyComp>#endif</keyComp><br>
+<br>
+<keyComp>#if</keyComp> defined(_WIN32) &amp;&amp; !defined(_WIN64)<br>
+<keyComp>#define</keyComp> PLATFORM <string>"i686-pc-winnt"</string><br>
+<keyComp>#endif</keyComp><br>
+<keyComp>#if</keyComp>def _WIN64<br>
+<keyComp>#define</keyComp> PLATFORM <string>"amd64-pc-winnt"</string><br>
+<keyComp>#endif</keyComp><br>
+<br>
+<comment>// global</comment><br>
+<comment>// to remove this</comment><br>
+<comment>// window uses this to make windows and get window count (can be just be passed in when creating a window)</comment><br>
+<comment>// AElement uses it to getActiveDocumentComponent and navTo on that</comment><br>
+<comment>//</comment><br>
+std::unique_ptr&lt;Browser&gt; browser = nullptr;<br>
+std::unique_ptr&lt;BaseRenderer&gt; renderer = nullptr;<br>
+<br>
+<comment>// forward declaration</comment><br>
+<fnDef><fnDefHeader><keyVar>bool</keyVar> <fnCall><fnName>isAbsolutePath</fnName><args>(<arg><keyVar>const</keyVar> std::string s</arg>)</args></fnCall></fnDefHeader>;</fnDef><br>
+<fnDef><fnDefHeader><keyVar>bool</keyVar> <fnCall><fnName>fileExists</fnName><args>(<arg><keyVar>const</keyVar> std::string s</arg>)</args></fnCall></fnDefHeader>;</fnDef><br>
+<br>
+<fnDef><fnDefHeader><keyVar>bool</keyVar> <fnCall><fnName>isAbsolutePath</fnName><args>(<arg><keyVar>const</keyVar> std::string s</arg>)</args></fnCall> </fnDefHeader><block>{<br>
+ &nbsp;&nbsp; <fnCall><fnName>return </fnName><args>(<arg>s.length(</arg>)</args></fnCall> &gt; 0 &amp;&amp; s[0] == '/');<br>
+}</block></fnDef><br>
+<br>
+<fnDef><fnDefHeader><keyVar>bool</keyVar> <fnCall><fnName>fileExists</fnName><args>(<arg><keyVar>const</keyVar> std::string s</arg>)</args></fnCall> </fnDefHeader><block>{<br>
+ &nbsp;&nbsp; struct stat buf;<br>
+ &nbsp;&nbsp; <keyComp>return</keyComp> <fnCall><fnName>stat</fnName><args>(<arg>s.c_str(</arg>)</args></fnCall>, &amp;buf) != -1;<br>
+}</block></fnDef><br>
+<br>
+extern TextRasterizerCache *rasterizerCache;<br>
+<br>
+<fnDef><fnDefHeader><keyVar>int</keyVar> <fnCall><fnName>main</fnName><args>(<arg><keyVar>int</keyVar> argc</arg>,<arg> <keyVar>char</keyVar> *argv[]</arg>)</args></fnCall> </fnDefHeader><block>{<br>
+ &nbsp;&nbsp; <comment>// show help msg when "--help" appears</comment><br>
+ &nbsp;&nbsp; <fnCall><fnName>if </fnName><args>(<arg>argc &gt; <num>1</num></arg>)</args></fnCall> <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <comment>// has to be set up for logging before first logging call</comment><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <fnCall><fnName>initCLParams</fnName><args>(<arg>argc</arg>,<arg> argv</arg>)</args></fnCall>;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <fnCall><fnName>if </fnName><args>(<arg>strcmp(argv[<num>1</num>]</arg>,<arg> <string>"--help"</string></arg>)</args></fnCall>==0) <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; std::cout &lt;&lt; <string>"./netrunner [http://host.tld/|/path/to/file.html] [-log &lt;error|warning|notice|info|debug&gt;]"</string> &lt;&lt; std::endl;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <keyComp>return</keyComp> 1;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</block><br>
+ &nbsp;&nbsp; }</block><br>
+<keyComp>#if</keyComp>def _WIN32<br>
+ &nbsp;&nbsp; <fnCall><fnName>init_heap</fnName><args>()</args></fnCall>; <comment>// the NT port requires it. We do it at startup now, to allow 2LSF to run at any time</comment><br>
+<keyComp>#endif</keyComp><br>
+<br>
+ &nbsp;&nbsp; std::cout \<br>
+ &nbsp;&nbsp; &lt;&lt; <string>"# &nbsp;&nbsp;&nbsp; # &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ######"</string> &lt;&lt; std::endl \<br>
+ &nbsp;&nbsp; &lt;&lt; <string>"## &nbsp;&nbsp; #&nbsp; ###### &nbsp; ##### # &nbsp;&nbsp;&nbsp; #&nbsp; # &nbsp;&nbsp; #&nbsp; # &nbsp;&nbsp; #&nbsp; # &nbsp;&nbsp; #&nbsp; ######&nbsp; #####"</string> &lt;&lt; std::endl \<br>
+ &nbsp;&nbsp; &lt;&lt; <string>"# # &nbsp; #&nbsp; # &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # &nbsp; # &nbsp;&nbsp;&nbsp; #&nbsp; # &nbsp;&nbsp; #&nbsp; ## &nbsp; #&nbsp; ## &nbsp; #&nbsp; # &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # &nbsp;&nbsp; #"</string> &lt;&lt; std::endl \<br>
+ &nbsp;&nbsp; &lt;&lt; <string>"#&nbsp; #&nbsp; #&nbsp; ##### &nbsp;&nbsp;&nbsp;&nbsp; # &nbsp; ###### &nbsp; # &nbsp;&nbsp; #&nbsp; # #&nbsp; #&nbsp; # #&nbsp; #&nbsp; ##### &nbsp; # &nbsp;&nbsp; #"</string> &lt;&lt; std::endl \<br>
+ &nbsp;&nbsp; &lt;&lt; <string>"# &nbsp; # #&nbsp; # &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # &nbsp; # &nbsp; # &nbsp;&nbsp; # &nbsp;&nbsp; #&nbsp; #&nbsp; # #&nbsp; #&nbsp; # #&nbsp; # &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; #####"</string> &lt;&lt; std::endl \<br>
+ &nbsp;&nbsp; &lt;&lt; <string>"# &nbsp;&nbsp; ##&nbsp; # &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # &nbsp; # &nbsp;&nbsp; # &nbsp; # &nbsp;&nbsp; #&nbsp; # &nbsp; ##&nbsp; # &nbsp; ##&nbsp; # &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # &nbsp; #"</string> &lt;&lt; std::endl \<br>
+ &nbsp;&nbsp; &lt;&lt; <string>"# &nbsp;&nbsp;&nbsp; #&nbsp; ###### &nbsp;&nbsp;&nbsp; # &nbsp; # &nbsp;&nbsp;&nbsp; # &nbsp; #### &nbsp; # &nbsp;&nbsp; #&nbsp; # &nbsp;&nbsp; #&nbsp; ######&nbsp; # &nbsp;&nbsp; #"</string> &lt;&lt; std::endl;<br>
+<br>
+<keyComp>#if</keyComp> <fnCall><fnName>defined</fnName><args>(<arg>VERSION</arg>)</args></fnCall> &amp;&amp; <fnCall><fnName>defined</fnName><args>(<arg>PLATFORM</arg>)</args></fnCall><br>
+ &nbsp;&nbsp; std::cout &lt;&lt; <string>"/g/ntr - NetRunner build "</string> &lt;&lt; __DATE__ &lt;&lt; <string>": rev-"</string> &lt;&lt; VERSION &lt;&lt; <string>" for "</string> &lt;&lt; PLATFORM &lt;&lt; std::endl;<br>
+#<keyComp>else</keyComp><br>
+ &nbsp;&nbsp; std::cout &lt;&lt; <string>"/g/ntr - NetRunner build "</string> &lt;&lt; __DATE__ &lt;&lt; <string>": internal-dev non-Makefile build"</string> &lt;&lt; std::endl;<br>
+<keyComp>#endif</keyComp><br>
+<br>
+ &nbsp;&nbsp; <br>
+ &nbsp;&nbsp; Environment::<fnCall><fnName>init</fnName><args>()</args></fnCall>;<br>
+ &nbsp;&nbsp; CFGFileParser *parser = <keyComp>new</keyComp> <fnCall><fnName>CFGFileParser</fnName><args>(<arg><string>"res/netrunner.cfg"</string></arg>)</args></fnCall>;<br>
+ &nbsp;&nbsp; BrowserConfiguration *config = <keyComp>new</keyComp> <fnCall><fnName>BrowserConfiguration</fnName><args>()</args></fnCall>;<br>
+ &nbsp;&nbsp; <fnCall><fnName>if </fnName><args>(<arg>!parser</arg>)</args></fnCall> <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; std::cout &lt;&lt; <string>"no parser!"</string> &lt;&lt; std::endl;<br>
+ &nbsp;&nbsp; }</block><br>
+ &nbsp;&nbsp; <fnCall><fnName>if </fnName><args>(<arg>parser-&gt;ParseText(</arg>)</args></fnCall>)<block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; parser-&gt;<fnCall><fnName>WriteConfig</fnName><args>(<arg>*config</arg>)</args></fnCall>;<br>
+ &nbsp;&nbsp; }</block><br>
+ &nbsp;&nbsp; <keyComp>delete</keyComp> parser;<br>
+ &nbsp;&nbsp; <keyComp>#if</keyComp>def DEBUG<br>
+ &nbsp;&nbsp; std::cout &lt;&lt; <string>"Global Settings contains, in no particular order:\n"</string>;<br>
+ &nbsp;&nbsp; <fnCall><fnName>for </fnName><args>(<arg> auto it = config-&gt;Settings.begin(</arg>)</args></fnCall>; it != config-&gt;Settings.<fnCall><fnName>end</fnName><args>()</args></fnCall>; ++it )<block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; std::cout &lt;&lt; it-&gt;first &lt;&lt; <string>":"</string> &lt;&lt; it-&gt;second &lt;&lt; std::endl;<br>
+ &nbsp;&nbsp; }</block><br>
+ &nbsp;&nbsp; std::cout &lt;&lt; std::endl;<br>
+ &nbsp;&nbsp; <keyComp>#endif</keyComp><br>
+ &nbsp;&nbsp; <br>
+ &nbsp;&nbsp; renderer = std::make_unique&lt;OpenGL&gt;();<br>
+<br>
+&emsp;<comment>//Environment::init();</comment><br>
+ &nbsp;&nbsp; <br>
+ &nbsp;&nbsp; renderer-&gt;<fnCall><fnName>initialize</fnName><args>()</args></fnCall>;<br>
+ &nbsp;&nbsp; <br>
+ &nbsp;&nbsp; /*<br>
+ &nbsp;&nbsp; Rect pos;<br>
+ &nbsp;&nbsp; pos.x=0;<br>
+ &nbsp;&nbsp; pos.y=0;<br>
+ &nbsp;&nbsp; pos.w=1024;<br>
+ &nbsp;&nbsp; pos.h=640;<br>
+ &nbsp;&nbsp; OpenGLWindowHandle *win = renderer.<fnCall><fnName>createWindow</fnName><args>(<arg><string>"NTR"</string></arg>,<arg> &amp;pos</arg>,<arg> <num>0</num></arg>)</args></fnCall>;<br>
+ &nbsp;&nbsp; <fnCall><fnName>if </fnName><args>(<arg>!win</arg>)</args></fnCall> <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; std::cout &lt;&lt; <string>"Couldn't create window"</string> &lt;&lt; std::endl;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <keyComp>return</keyComp> 0;<br>
+ &nbsp;&nbsp; }</block><br>
+ &nbsp;&nbsp; <br>
+ &nbsp;&nbsp; OpenGLTexture *blue = win-&gt;<fnCall><fnName>createSpriteFromColor</fnName><args>(<arg><num>0</num>x<num>0000</num>FFFF</arg>)</args></fnCall>;<br>
+ &nbsp;&nbsp; <fnCall><fnName>if </fnName><args>(<arg>!blue</arg>)</args></fnCall> <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; std::cout &lt;&lt; <string>"Couldn't create blue"</string> &lt;&lt; std::endl;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <keyComp>return</keyComp> 0;<br>
+ &nbsp;&nbsp; }</block><br>
+ &nbsp;&nbsp; Rect dPos = <block>{ 0, 0, 512, 320 }</block>;<br>
+ &nbsp;&nbsp;&nbsp; */<br>
+ &nbsp;&nbsp; <br>
+ &nbsp;&nbsp; /*<br>
+ &nbsp;&nbsp; <keyVar>const</keyVar> std::shared_ptr&lt;TextRasterizer&gt; textRasterizer = rasterizerCache-&gt;<fnCall><fnName>loadFont</fnName><args>(<arg><num>12</num></arg>,<arg> false</arg>)</args></fnCall>;<br>
+ &nbsp;&nbsp; rasterizationRequest request;<br>
+ &nbsp;&nbsp; request.text = <string>"Hello World"</string>;<br>
+ &nbsp;&nbsp; request.startX = 512;<br>
+ &nbsp;&nbsp; request.availableWidth = 1024;<br>
+ &nbsp;&nbsp; request.maxTextureSize = 16384;<br>
+ &nbsp;&nbsp; request.noWrap = true;<br>
+ &nbsp;&nbsp; <comment>//std::cout &lt;&lt; "rasterizing [" &lt;&lt; text &lt;&lt; "] @" &lt;&lt; rawX &lt;&lt; " availableWidth: " &lt;&lt; availableWidth &lt;&lt; " sourceStartX: " &lt;&lt; rasterStartX &lt;&lt; " noWrap: " &lt;&lt; noWrap &lt;&lt; std::endl;</comment><br>
+ &nbsp;&nbsp; std::shared_ptr&lt;rasterizationResponse&gt; response = textRasterizer-&gt;<fnCall><fnName>rasterize</fnName><args>(<arg>request</arg>)</args></fnCall>;<br>
+ &nbsp;&nbsp; <br>
+ &nbsp;&nbsp; textureMap textureMap;<br>
+ &nbsp;&nbsp; textureMap.map[0] = response-&gt;s0;<br>
+ &nbsp;&nbsp; textureMap.map[1] = response-&gt;t0;<br>
+ &nbsp;&nbsp; textureMap.map[2] = response-&gt;s1;<br>
+ &nbsp;&nbsp; textureMap.map[3] = response-&gt;t1;<br>
+ &nbsp;&nbsp; <br>
+ &nbsp;&nbsp; OpenGLTexture *text = win-&gt;<fnCall><fnName>createTextSprite</fnName><args>(<arg>response-&gt;textureData.get(</arg>)</args></fnCall>, response-&gt;textureWidth, response-&gt;textureHeight, textureMap);<br>
+ &nbsp;&nbsp; Rect dPos3 = <block>{ 512, 320, 512, 320}</block>;<br>
+ &nbsp;&nbsp;&nbsp; */<br>
+ &nbsp;&nbsp; <br>
+ &nbsp;&nbsp; /*<br>
+ &nbsp;&nbsp; RGBAPNMObject *anime = <fnCall><fnName>readPPM</fnName><args>(<arg><string>"kon32_661.pam"</string></arg>)</args></fnCall>;<br>
+ &nbsp;&nbsp; <fnCall><fnName>if </fnName><args>(<arg>!anime</arg>)</args></fnCall> <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; std::cout &lt;&lt; <string>"Couldn't load image"</string> &lt;&lt; std::endl;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <keyComp>return</keyComp> 0;<br>
+ &nbsp;&nbsp; }</block><br>
+ &nbsp;&nbsp;&nbsp; opengl_texture_handle *red = win-&gt;<fnCall><fnName>createSprite</fnName><args>(<arg>anime-&gt;m_Ptr</arg>,<arg> anime-&gt;width</arg>,<arg> anime-&gt;height</arg>)</args></fnCall>;<br>
+ &nbsp;&nbsp;&nbsp; Rect dPos2 = <block>{ 512, 320, 512, 320}</block>;<br>
+ &nbsp;&nbsp; */<br>
+ &nbsp;&nbsp; <br>
+ &nbsp;&nbsp; /*<br>
+ &nbsp;&nbsp; win-&gt;<fnCall><fnName>clear</fnName><args>()</args></fnCall>;<br>
+ &nbsp;&nbsp; win-&gt;<fnCall><fnName>drawSpriteBox</fnName><args>(<arg>blue</arg>,<arg> &amp;dPos</arg>)</args></fnCall>;<br>
+ &nbsp;&nbsp; win-&gt;<fnCall><fnName>drawSpriteText</fnName><args>(<arg>text</arg>,<arg> <num>0</num>x<num>000000</num>FF</arg>,<arg> &amp;dPos<num>3</num></arg>)</args></fnCall>;<br>
+ &nbsp;&nbsp; <comment>//win-&gt;drawSpriteBox(red, &amp;dPos2);</comment><br>
+ &nbsp;&nbsp; win-&gt;<fnCall><fnName>swapBuffers</fnName><args>()</args></fnCall>;<br>
+<br>
+ &nbsp;&nbsp; <fnCall><fnName>while</fnName><args>(<arg><num>1</num></arg>)</args></fnCall> <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <fnCall><fnName>glfwWaitEvents</fnName><args>()</args></fnCall>; <comment>// block until something changes</comment><br>
+ &nbsp;&nbsp; }</block><br>
+ &nbsp;&nbsp; <br>
+ &nbsp;&nbsp; <keyComp>return</keyComp> 0;<br>
+ &nbsp;&nbsp; */<br>
+<br>
+ &nbsp;&nbsp; <comment>// we need to set up OGL before we can setDOM (because component can't be constructed (currently) without OGL)</comment><br>
+ &nbsp;&nbsp; <comment>// but should be after CommandLineParams incase we need to change some type of window config</comment><br>
+ &nbsp;&nbsp; browser = std::make_unique&lt;Browser&gt;();<br>
+ &nbsp;&nbsp; browser-&gt;<fnCall><fnName>addWindow</fnName><args>()</args></fnCall>;<br>
+ &nbsp;&nbsp; <fnCall><fnName>if </fnName><args>(<arg>!browser-&gt;windows.front(</arg>)</args></fnCall>.<fnCall><fnName>get</fnName><args>()</args></fnCall>-&gt;window) <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <keyComp>return</keyComp> 1;<br>
+ &nbsp;&nbsp; }</block><br>
+<br>
+ &nbsp;&nbsp; <comment>//std::cout &lt;&lt; "argc " &lt;&lt; argc &lt;&lt; std::endl;</comment><br>
+ &nbsp;&nbsp; <fnCall><fnName>if </fnName><args>(<arg>argc &gt; <num>1</num></arg>)</args></fnCall> <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <comment>// this isn't going to work</comment><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; std::string rawUrl = <fnCall><fnName>getCLParamByIndex</fnName><args>(<arg><num>1</num></arg>)</args></fnCall>;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <fnCall><fnName>if </fnName><args>(<arg>rawUrl != <string>"-log"</string></arg>)</args></fnCall> <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <comment>// if we do this here, shouldn't we do this in parseUri too?</comment><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <fnCall><fnName>if </fnName><args>(<arg>rawUrl.find(<string>"://"</string></arg>)</args></fnCall> == rawUrl.npos) <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <comment>// Path should always be absolute for file://</comment><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <fnCall><fnName>if </fnName><args>(<arg>isAbsolutePath(rawUrl</arg>)</args></fnCall>) <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; rawUrl = <string>"file://"</string> + rawUrl;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</block> <keyComp>else</keyComp> <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; auto absolutePath = std::<fnCall><fnName>string</fnName><args>(<arg>getenv(<string>"PWD"</string></arg>)</args></fnCall>) + '/' + rawUrl;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <fnCall><fnName>if </fnName><args>(<arg>fileExists(absolutePath</arg>)</args></fnCall>) <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; rawUrl = <string>"file://"</string> + absolutePath;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</block> <keyComp>else</keyComp> <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <comment>// Default to http if the file wasn't found</comment><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; rawUrl = <string>"http://"</string> + rawUrl;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</block><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</block><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</block><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <comment>//logDebug() &lt;&lt; "pre URL parse [" &lt;&lt; url &lt;&lt; "]" &lt;&lt; std::endl;</comment><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <comment>//window-&gt;currentURL = URL(rawUrl);</comment><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <fnCall><fnName>logDebug</fnName><args>()</args></fnCall> &lt;&lt; <string>"loading ["</string> &lt;&lt; rawUrl &lt;&lt; <string>"]"</string> &lt;&lt; std::endl;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; TabbedComponent *tabComponent = dynamic_cast&lt;TabbedComponent*&gt;(browser-&gt;windows.<fnCall><fnName>front</fnName><args>()</args></fnCall>.<fnCall><fnName>get</fnName><args>()</args></fnCall>-&gt;tabComponent.<fnCall><fnName>get</fnName><args>()</args></fnCall>);<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <fnCall><fnName>if </fnName><args>(<arg>tabComponent</arg>)</args></fnCall> <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; tabComponent-&gt;<fnCall><fnName>addTab</fnName><args>(<arg><string>"Start Tab, Loading..."</string></arg>)</args></fnCall>;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; tabComponent-&gt;<fnCall><fnName>selectTab</fnName><args>(<arg>tabComponent-&gt;tabs.front(</arg>)</args></fnCall>);<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <comment>// render the loading label, before we block for loading</comment><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; browser-&gt;<fnCall><fnName>render</fnName><args>()</args></fnCall>;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</block><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /*<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <fnCall><fnName>if </fnName><args>(<arg>!setWindowContent(window-&gt;currentURL</arg>)</args></fnCall>) <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <keyComp>return</keyComp> 1;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</block><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; */<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; std::shared_ptr&lt;DocumentComponent&gt; docComponent = browser-&gt;<fnCall><fnName>getActiveDocumentComponent</fnName><args>()</args></fnCall>;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <fnCall><fnName>if </fnName><args>(<arg>docComponent</arg>)</args></fnCall> <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <comment>// now tell it to navigate somewhere</comment><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; docComponent-&gt;<fnCall><fnName>navTo</fnName><args>(<arg>rawUrl</arg>)</args></fnCall>;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</block><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</block> <keyComp>else</keyComp> <block>{<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <comment>// be nice if we could put http:// in the address bar</comment><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</block><br>
+ &nbsp;&nbsp; }</block><br>
+ &nbsp;&nbsp; <br>
+ &nbsp;&nbsp; browser-&gt;<fnCall><fnName>loop</fnName><args>()</args></fnCall>;<br>
+ &nbsp;&nbsp; <keyComp>return</keyComp> 0;<br>
+}</block></fnDef><br>
+</file>

@@ -1,0 +1,132 @@
+/*@font-face {
+	font-family: 'UbuntuMono';
+  	src:  url('fonts/UbuntuMono-Regular.ttf') format('truetype');
+}
+*/
+
+/*@font-face {
+	font-family: 'RobotoMono';
+  	src:  url('fonts/RobotoMono-Regular.ttf') format('truetype');
+}*/
+
+/*@font-face {
+	font-family: 'SourceCodePro';
+  	src:  url('fonts/SourceCodePro-Regular.ttf') format('truetype');
+}*/
+
+/*@font-face {
+	font-family: 'Inconsolata';
+  	src:  url('fonts/Inconsolata-Regular.ttf') format('truetype');
+}*/
+
+@font-face {
+	font-family: 'DejaVuSansMono';
+	src:  url('fonts/DejaVuSansMono-Bold.ttf') format('truetype');
+}
+
+@font-face {
+	font-family: 'Consolas';
+	src:  url('fonts/Consolas.ttf') format('truetype');
+}
+
+
+.linked_page_item {
+	animation: highlight_and_frame 4s ease;
+	animation-direction: forwards;
+}
+
+
+@keyframes highlight_and_fade{
+	start {
+		background-color: rgba(120,120,120,0.05); 
+	}
+	end {
+		background-color: inherit;
+	}
+}
+
+
+
+body {
+	font-family: "DejaVuSansMono", arial;
+	/*font-family: "Consolas", arial;*/
+	/*font-family:  arial;*/
+	font-size: 12.5px;
+	/*font-weight: bold;*/
+	background-color: #272822;
+	color: #f8f8ed;
+	/*color: #646e5d;*/
+}
+
+	classDef, fnDef {
+		display: block;
+	}
+
+	classDef:hover, fnDef:hover, block:hover, fnDefBlock:hover{
+		background-color: rgba(120,120,120,0.05);
+	}
+		/*classDefBlock:hover, fnDefBlock:hover {
+			background-color: rgba(20,120,120,0.15);
+		}
+
+			classFnPrivacyBlock:hover {
+				background-color: rgba(120,20,120,0.15);
+			}*/
+
+				classFnDef {
+					color: #ace100;
+				}
+
+					classFnParams, args {
+						color: #f8f8ed;
+					}
+
+	
+
+	comment {
+		color: #646e5d;
+		/*color: #f8f8ed;*/
+		/*font-size: 15px;*/
+	}
+		TODO {
+			color: #1b0808;
+		    background-color: #ff005a;
+		    font-weight: bold;
+		}
+		
+
+	num {
+		color: #ab82ff;
+	}
+
+	keyComp {
+		color: #f07;
+	}
+		string, include {
+			color: #f4e161;
+		}
+
+			a {
+				color: inherit; 
+				text-decoration-color: #646e5d;
+			}
+
+			a:hover {
+				text-decoration-color: #f8f8ed;
+			}
+
+		include {
+			color: #d8c963;
+		}
+
+	keyVar, fnName {
+		color: #77d9f1;
+	}
+
+	keyClass {
+		color: #5df;
+	}
+
+		classNameDef, inheritance, fnDefHeader fnName, classfnprivacyblock fnName {
+			color: #c3ff00;
+		}

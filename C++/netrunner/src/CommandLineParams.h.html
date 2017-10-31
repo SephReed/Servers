@@ -1,0 +1,18 @@
+<link href='public/code_style.css' rel='stylesheet' type='text/css'><script type="text/javascript" src="public/file_view.js"></script><file><keyComp>#ifndef</keyComp> COMMANDLINEPARAMS_H<br>
+<keyComp>#define</keyComp> COMMANDLINEPARAMS_H<br>
+<br>
+<include><keyComp>#include</keyComp> &lt;string&gt;</include><br>
+<br>
+<fnDef><fnDefHeader><keyVar>void</keyVar> <fnCall><fnName>initCLParams</fnName><args>(<arg><keyVar>int</keyVar> argc</arg>,<arg> <keyVar>char</keyVar> *argv[]</arg>)</args></fnCall></fnDefHeader>;</fnDef><br>
+<br>
+<comment>// USAGE: getCLParam("-example")</comment><br>
+<fnDef><fnDefHeader><keyVar>bool</keyVar> <fnCall><fnName>getCLParam</fnName><args>(<arg>std::string <keyVar>const</keyVar>&amp; param</arg>)</args></fnCall></fnDefHeader>;</fnDef><br>
+<br>
+<comment>// 0 is the program name</comment><br>
+<fnDef><fnDefHeader>std::string <fnCall><fnName>getCLParamByIndex</fnName><args>(<arg>unsigned <keyVar>int</keyVar> i</arg>)</args></fnCall></fnDefHeader>;</fnDef><br>
+<br>
+<comment>// USAGE: getRelativeCLParam("-example", 1) gives the param after -example</comment><br>
+<fnDef><fnDefHeader>std::string <fnCall><fnName>getRelativeCLParam</fnName><args>(<arg>std::string <keyVar>const</keyVar>&amp; param</arg>,<arg> <keyVar>int</keyVar> i</arg>)</args></fnCall></fnDefHeader>;</fnDef><br>
+<br>
+<keyComp>#endif</keyComp><br>
+</file>

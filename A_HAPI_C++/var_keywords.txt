@@ -1,6 +1,0 @@
-const
-int
-void
-float
-char
-byte 

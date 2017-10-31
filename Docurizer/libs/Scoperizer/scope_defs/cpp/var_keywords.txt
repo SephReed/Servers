@@ -1,0 +1,7 @@
+const
+int
+void
+float
+char
+byte 
+bool
