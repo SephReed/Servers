@@ -15,15 +15,16 @@ exports.augment = function(Scoperizer) {
 					childResults.forEach((result) => {outStrings.push(result)});
 
 				outStrings.push("</"+name+">");
+
+				scopeChunk.dispatchScopeEvent("htmlOut", outStrings)
+
 				return outStrings.join('');
 			}
 		}))
 	};
 }
 
-exports.blockify = function(chunk, htmlSpans) {
-	htmlSpans.push("&rmnxt;");
-}
+
 
 
 exports.exitHtml = function(exitMe) {
@@ -33,8 +34,11 @@ exports.exitHtml = function(exitMe) {
 	return exitMe;
 }
 
+
+
+
 exports.htmlifySpacing = function(showMe) {
-	return showMe.replace(/&rmnxt;[\n.]/g, '')
+	return showMe.replace(/&rmnxt;[\n.]?/g, '')
 	.replace(/  +/g, function(spaces){
 		if(spaces.length == 2)
 			return "&nbsp; ";
@@ -44,5 +48,9 @@ exports.htmlifySpacing = function(showMe) {
 	.replace(/\t/g, '&emsp;')
 	.replace(/\n/g, '<br>\n');
 }
+
+
+
+
 
 

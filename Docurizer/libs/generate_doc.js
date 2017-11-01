@@ -1,13 +1,5 @@
 const fs = require('./betterFs.js').fs;
 
-// var getDoc = fs.promise.readFile()
-// .then((data) => {
-// 	return data + "";
-// });
-
-
-
-
 
 
 

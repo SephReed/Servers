@@ -42,12 +42,6 @@ exports.txtListToRegExpString = function(filePath) {
 
 
 
-exports.LOOSE_TEXT_SCOPE = {
-	name:"LooseText",
-	subScopes: [],
-	potentialSubScopes: [],
-}
-
 
 
 
@@ -429,6 +423,14 @@ exports.Scope = function(scopeDef) {
 }
 
 
+
+exports.LOOSE_TEXT_SCOPE = new exports.Scope({
+	name:"LooseText",
+	subScopes: [],
+	potentialSubScopes: [],
+});
+
+
 exports.Scope.prototype.on = function(eventName, fn) {
 	var THIS = this;
 	if(THIS.eventListeners[eventName] == undefined)
@@ -584,16 +586,14 @@ exports.ScopeChunk.prototype.getRawText = function() {
 
 exports.ScopeChunk.prototype.dispatchScopeEvent = function(eventName, args) {
 	var THIS = this;
+	if(THIS.scope.eventListeners == undefined)
+		console.log(THIS.scope);
+
 	var listeners = THIS.scope.eventListeners[eventName];
 
 	if(listeners) {
-		if(args) 
-			args.scopeChunk = THIS;
-		else 
-			args = THIS;
-		
 		listeners.forEach((listenFn) => {
-			listenFn(args);
+			listenFn(THIS, args);
 		})
 	}	
 }

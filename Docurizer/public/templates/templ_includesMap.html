@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<link href='../public/overview.css' rel='stylesheet' type='text/css'>
+</head>
+<body>
+	<h1>Overview - Include Map</h1>
+
+	{{[]=>> includes}}
+	<class>
+		<a href='../{{relativeDir}}/{{fileNameAndExtension}}.html' target='file_content' class='back_ref'>
+			{{fileName}}
+		</a>
+
+		{{[] alts}}
+			<a href='../{{relativeDir}}/{{fileNameAndExtension}}.html' target='file_content' class='back_ref'>
+				{{extension}}
+			</a>
+		{{end}}
+
+		<includes>
+			{{<<=}}
+		</includes>
+	</class>
+	{{end}}
+</body>
+</html>
+
+
+
+
+
+var out = "";
+
+	if(state === undefined) {
+		state = { added: [] };	
+		out += ``;
+		out += "";
+	}
+
+	var file = map[filePath];
+	
+
+	if(state.added.indexOf(filePath) != -1){
+		return "";
+	}
+	state.added.push(filePath);
+
+
+	var preOpened = state.added.length == 1;
+	
+	out += "<class>\n";
+	filePath = filePath.replace("test/", '');
+
+	out += "<a href='../"+file.relativeDir+"/"+file.name+".html' target='file_content'>"+file.name+"</a>";
+	out += "<a href='../"+file.relativeDir+"/"+file.nameAndExtension+".html' target='file_content' class='sameName'>(.hpp)</a>"
+
+	var includesHtml = "";
+	// var splitName = pathTool.basename(filePath).split('.');
+	if(file.includePaths) {
+		file.includePaths.forEach(function(inc) {
+			if(map[inc] !== undefined) {
+				// var incSplitName = pathTool.basename(inc).split('.');
+				if(inc.name == file.name){
+					if(inc.extension != file.extension){
+						inc = inc.replace("test/", '');
+						out += "<a href='../"+inc.relativeDir+"/"+inc.nameAndExtension+".html' target='file_content' class='sameName'>(."+inc.extension+")</a>";
+					}
+
+					else console.error("file includes in self", filePath);
+				}
+				else {
+					var addMe = DOCZ.createIncludeOrderOverview(inc, map, state);
+					if(addMe)
+						includesHtml += addMe;
+				}	
+			}
+			else console.error("skipping includes", inc)
+		});
+	}
+
+	if(includesHtml.length){
+		var ID = "inc_drop_"+DOCZ.includeDropID++;
+		out += "<input type='checkbox' id='"+ID;
+		out += preOpened ? "'' checked>" : "'>";
+		out += "<label for='"+ID+"'></label>";
+		out += "\n<includes>"+includesHtml+"</includes>\n";
+	}
+
+	out += "</class>\n"
+	return out;

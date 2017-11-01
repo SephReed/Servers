@@ -4,17 +4,13 @@ const pathTool = require('path');
 const rootFilePath = process.argv[2];
 const fs = require('./libs/betterFs').fs;
 const Scoperizer = require('./libs/Scoperizer/Scoperizer.js');
+require('./libs/Scoperizer/augments/scopeChunks_toHtml.js').augment(Scoperizer);
+
 const cppScopes = require('./libs/Scoperizer/scope_defs/cpp/scopes.js');
-const gemOfToHtml = require('./libs/Scoperizer/augments/scopeChunks_toHtml.js');
-gemOfToHtml.augment(Scoperizer);
+const cppParser = new Scoperizer.RuleSet(cppScopes);
+require('./libs/docurize_scopes.js').augment(cppParser);
+// require('./libs/Scoperizer/cpp_classify.js').augment(cppParser);
 
-
-
-const gemOfDocurization = require('./libs/docurize_scopes.js');
-gemOfDocurization.augment(cppScopes);
-
-
-const cppRuleSet = new Scoperizer.RuleSet(cppScopes);
 
 // DOCZ.scopes = cppScopes;
 
@@ -23,23 +19,26 @@ const generate_doc = require('./libs/generate_doc.js');
 DOCZ.docMaker = new generate_doc.Template("./libs/doc_template.html")
 
 
+const Permeate = require('./libs/Permeate.js');
+
+
 // DOCZ.limitFileCount = 2;
 DOCZ.filesFound = 0;
 
 
 
 DOCZ.files = {};
+DOCZ.files.byPath = {};
+DOCZ.files.list = [];
 DOCZ.registerFile = function(file) {
 	DOCZ.filesFound++;
-	DOCZ.files[file.path] = file;
+	DOCZ.files.byPath[file.path] = file;
+	DOCZ.files.list.push(file);
 }
 
 
 
-
-
-
-cppRuleSet.getScope("include").on("complete", function(scopeChunk) {
+cppParser.getScope("include").on("complete", function(scopeChunk) {
 	var chunk = scopeChunk.getFirstSub(">string");
 	if(chunk) {
 		var include = chunk.file.rawText.substring(chunk.startIndex+1, chunk.endIndex);
@@ -47,6 +46,9 @@ cppRuleSet.getScope("include").on("complete", function(scopeChunk) {
 		scopeChunk.includePath = include;
 	}
 });
+
+
+
 
 
 
@@ -60,9 +62,10 @@ DOCZ.run = function() {
 		var overview = {};
 		overview.root = rootFilePath;
 
+		
+
 		var writePromises = [];
-		for(var path in DOCZ.files) {
-			let file = DOCZ.files[path];
+		DOCZ.files.list.forEach((file) => {
 
 			if(file.scopeChunk) {
 
@@ -88,28 +91,33 @@ DOCZ.run = function() {
 				fs.ensureDirectoryExistence(outPath)
 				writePromises.push(fs.promise.writeFile(outPath, htmlVersion));
 
-				overview[path] = {
+				overview[file.path] = {
 					includes: file.includePaths
 				}
-
-
-				//MAKING OF DOCS
-				writePromises.push(file.getDoc()
-					.then((doc) => {
-						fs.promise.writeFile("renders/"+file.name+".html", doc)
-					})
-				);
 			}
 			else {
 				console.error("File:", file.nameAndExtension, "failed to scopify.  Skipping...")
 			}
-		}
+		});
+
+
+		var classes = DOCZ.classifyFiles(DOCZ.files.list);
+		classes.list.forEach((classInfo) => {
+			writePromises.push(classInfo.getDoc()
+				.then((doc) => {
+					fs.promise.writeFile("renders/"+classInfo.relativeDirAndName+".doc.html", doc)
+					classInfo.doc = doc;
+				})
+			);	
+		})
+		
 
 		
 		fs.ensureDirectoryExistence("renders/overview/");
 		// writePromises.push(fs.promise.writeFile("renders/overview/file_data.json", JSON.stringify(overview)));
 
-		var includeOverviewHtml = DOCZ.createIncludeOrderOverview(rootFilePath, DOCZ.files);
+		// var includeOverviewHtml = DOCZ.createIncludeOrderOverview(rootFilePath, DOCZ.files.byPath);
+		var includeOverviewHtml = DOCZ.createIncludeOrderOverview(rootFilePath.replace(/\..*$/i, ''), classes.byDirAndName);
 		writePromises.push(fs.promise.writeFile("renders/overview/includeMap.html", includeOverviewHtml));
 
 		return Promise.all(writePromises);
@@ -126,8 +134,8 @@ DOCZ.sprout = function(filePath) {
 	if(DOCZ.limitFileCount && DOCZ.limitFileCount <= DOCZ.filesFound)
 		return Promise.resolve();
 
-	if(DOCZ.files[filePath]) 
-		return Promise.resolve(DOCZ.files[filePath]);
+	if(DOCZ.files.byPath[filePath]) 
+		return Promise.resolve(DOCZ.files.byPath[filePath]);
 
 	var file = new DOCZ.class.File(filePath);
 	DOCZ.registerFile(file);
@@ -150,10 +158,76 @@ DOCZ.sprout = function(filePath) {
 
 
 
+/******************************************
+*
+*		Class- ClassInfo
+*
+*****************************************/
+DOCZ.class = {};
 
 
+DOCZ.classifyFiles = function(files) {
+	var classes = {};
+	classes.byDirAndName = {};
+	classes.list = [];
+
+	files.forEach((file) => {
+		var dirAndName = file.path.replace(/\..*$/i, '');
+
+		var classObj = classes.byDirAndName[dirAndName];
+		if(classObj == undefined) {
+			classObj = classes.byDirAndName[dirAndName] = new DOCZ.class.ClassInfo(file);
+			classes.list.push(classObj);
+		}
+		else classObj.addFile(file);
+		
+	})
+
+	return classes;
+}
 
 
+DOCZ.class.ClassInfo = function(originFile) {
+	var THIS = this;
+	THIS.includes = [];
+	THIS.originFile = originFile;
+	THIS.name = originFile.name;
+	THIS.dirAndName = originFile.path.replace(/\..*$/i, '');
+	THIS.relativeDirAndName = originFile.relativeDir+"/"+originFile.name;
+	THIS.files = {};
+
+	THIS.addFile(originFile);
+}
+
+DOCZ.class.ClassInfo.prototype.getDoc = function() {
+	var THIS = this;
+	if(THIS.files["h"])
+		return THIS.files["h"].getDoc();
+
+	else if(THIS.files["hpp"])
+		return THIS.files["hpp"].getDoc();
+
+	else if(THIS.files["c"])
+		return THIS.files["c"].getDoc();
+
+	else if(THIS.files["cpp"])
+		return THIS.files["cpp"].getDoc();
+};
+
+
+DOCZ.class.ClassInfo.prototype.addFile = function(file) {
+	var THIS = this;
+	THIS.files[file.extension] = file;
+
+	file.includes.forEach((includePath) => {
+		var fullPath = file.getRelativePath(includePath);
+
+		var classDirAndName = fullPath.replace(/\..*$/i, '');
+
+		if(classDirAndName != THIS.dirAndName && THIS.includes.indexOf(classDirAndName == -1))
+			THIS.includes.push(classDirAndName);
+	})
+}
 
 
 
@@ -165,7 +239,7 @@ DOCZ.sprout = function(filePath) {
 
 
 
-DOCZ.class = {};
+
 DOCZ.class.File = function(filePath) {
 	var THIS = this;
 	THIS.path = filePath;
@@ -192,9 +266,19 @@ DOCZ.class.File = function(filePath) {
 	THIS.rawText;
 	THIS.allRegexs = {};
 
-	var nonHeader = filePath.replace(/(hpp|h)$/i, "cpp");
-	if(nonHeader != filePath)
-		THIS.includes.push(pathTool.basename(nonHeader));
+	if(THIS.extension == "h" || THIS.extension == "hpp") {
+		var cppPath, cPath;
+		cppPath = cPath = pathTool.dirname(THIS.path) +  "/" + THIS.name ;
+		cppPath += ".cpp";
+		cPath += ".c";
+
+		if(fs.existsSync(cppPath)) {
+			THIS.addInclude(THIS.name + ".cpp");
+		}
+		else if(fs.existsSync(cPath)) {
+			THIS.addInclude(THIS.name + ".c");	
+		}
+	}
 }
 
 
@@ -208,7 +292,7 @@ DOCZ.class.File.prototype.scopifyText = function() {
 		.then((data) => {
 			// THIS.rawText = DOCZ.exitHtml(data+"");
 			THIS.rawText = data+"";
-			THIS.scopeChunk = cppRuleSet.scopify(THIS);
+			THIS.scopeChunk = cppParser.scopify(THIS);
 			THIS.includePaths = THIS.includes.map((include) => {
 				return THIS.getRelativePath(include);
 			});
@@ -277,66 +361,66 @@ DOCZ.assertViewer = function(filePath) {
 	return fs.copyFolder(DOCZ.viewerDir, "renders", true)
 }
 
-DOCZ.includeDropID = 0;
-DOCZ.createIncludeOrderOverview = function(filePath, map, state) {
-	var out = "";
 
-	if(state === undefined) {
-		state = { added: [] };	
-		out += `<link href='../public/overview.css' rel='stylesheet' type='text/css'>`;
-		out += "<h1>Include Path Overview</h1>";
-	}
-
-	var file = map[filePath];
-	
-
-	if(state.added.indexOf(filePath) != -1){
-		return "<class><a href='../"+file.relativeDir+"/"+file.name+".html' target='file_content' class='back_ref'>"+file.name+"</a></class>";
-	}
-	state.added.push(filePath);
+DOCZ.createIncludeOrderOverview = function(dirAndName, classMap, state) {
 
 
-	var preOpened = state.added.length == 1;
-	
-	out += "<class>\n";
-	filePath = filePath.replace("test/", '');
+	var classInfo = classMap[dirAndName];
+	var includeDropID = 0;
 
-	out += "<a href='../"+file.relativeDir+"/"+file.name+".html' target='file_content'>"+file.name+"</a>";
-	out += "<a href='../"+file.relativeDir+"/"+file.nameAndExtension+".html' target='file_content' class='sameName'>(.hpp)</a>"
+	var out = `<link href='../public/overview.css' rel='stylesheet' type='text/css'>`;
+	out += "<h1>Include Path Overview</h1>";
 
-	var includesHtml = "";
-	// var splitName = pathTool.basename(filePath).split('.');
-	if(file.includePaths) {
-		file.includePaths.forEach(function(inc) {
-			if(map[inc] !== undefined) {
-				// var incSplitName = pathTool.basename(inc).split('.');
-				if(inc.name == file.name){
-					if(inc.extension != file.extension){
-						inc = inc.replace("test/", '');
-						out += "<a href='../"+inc.relativeDir+"/"+inc.nameAndExtension+".html' target='file_content' class='sameName'>(."+inc.extension+")</a>";
-					}
 
-					else console.error("file includes in self", filePath);
+	var addedClasses = [];
+	out += Permeate.from(classInfo, {
+		childListName: "includes",
+		breadthFirst: true,
+		initFn: function(classInfo, state){
+			state.isRoot = addedClasses.length == 0;
+			state.preAdded = addedClasses.indexOf(classInfo.dirAndName) != -1;
+			if(state.preAdded == false)
+				addedClasses.push(classInfo.dirAndName);
+		},
+		getChildFn: function(classInfo, childListItem, state) {
+			return classMap[childListItem];
+		},
+		skipChildrenFn: function(classInfo, state){
+			return state.preAdded;
+		},
+		postChildrenFn: function(classInfo, childResults, state) {
+			var relativeNamePath = classInfo.relativeDirAndName.replace(/^\//i, '');
+			var out = `<class>`;
+
+			out += `<a href='../`+relativeNamePath+`.doc.html' target='file_content'`;
+			out += state.preAdded ? `class='back_ref'>` : `>`;
+			out += classInfo.name+`</a>`;
+
+			if(state.preAdded == false) {
+				for(var extension in classInfo.files) {
+					if(extension != "doc") 
+						out += "<a href='../"+relativeNamePath+"."+extension+".html' target='file_content' class='sameName'>(."+extension+")</a>";
 				}
-				else {
-					var addMe = DOCZ.createIncludeOrderOverview(inc, map, state);
-					if(addMe)
-						includesHtml += addMe;
-				}	
+
+				if(childResults.length) {
+					var ID = "inc_drop_"+includeDropID++;
+					out += "<input type='checkbox' id='"+ID;
+					out += state.isRoot ? "'' checked>" : "'>";
+					out += "<label for='"+ID+"'></label>";
+					out += "\n<includes>"
+
+					out += childResults.join('\n');
+
+					out += "</includes>\n";
+				}
 			}
-			else console.error("skipping includes", inc)
-		});
-	}
 
-	if(includesHtml.length){
-		var ID = "inc_drop_"+DOCZ.includeDropID++;
-		out += "<input type='checkbox' id='"+ID;
-		out += preOpened ? "'' checked>" : "'>";
-		out += "<label for='"+ID+"'></label>";
-		out += "\n<includes>"+includesHtml+"</includes>\n";
-	}
+			out += `</class>`;
+			return out;
+		}	
 
-	out += "</class>\n"
+	})
+
 	return out;
 }
 
