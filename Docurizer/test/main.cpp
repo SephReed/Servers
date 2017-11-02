@@ -5,7 +5,23 @@
 
 #include "Polygon.hpp"
 #include "Rectangle.hpp"
-#include "Triangle.hpp"
+#include "Triangle.h"
+
+
+
+/**********************
+*		PARSER
+*	CRASH COURSE
+**********************/
+
+
+#include "la" //comment
+
+
+
+
+
+
 
 
 // Prints out some details on a Polygon.
@@ -45,6 +61,14 @@ int main() {
 	printDetails(triangle);
 	// Cleanup the memory in the heap
 	delete triangle;
+
+
+	if(lalal) {
+		//go to here
+
+	}
+
+
 
 	return 0;
 }

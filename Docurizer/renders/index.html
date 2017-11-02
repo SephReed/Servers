@@ -22,6 +22,8 @@
 			inc : "overview/includeMap.html"
 		}
 		document.addEventListener("DOMContentLoaded", function() {
+			console.log("WOO")
+
 			//make links update the url args
 			var links = document.getElementsByTagName("a");
 			for(var i = 0; i < links.length; i++) {
@@ -46,22 +48,26 @@
 
 			if(args.ov && args.ov != "inc") 
 				$overview.src = overviewModes[args.ov];
-			
-
-			
 		});
 
+
+
 		window.updateFileIFrameSize = function(new_file_height) {
+			console.log("updating size", new_file_height);
 			file_height = new_file_height;
 			if($file_content)
-				$file_content.style.height = file_height+10+"px";
+				$file_content.style.height = file_height+30+"px";
 		}
+
+
 
 		var basePath = (window.location+'').replace(/index\.html.*/g, '');
 		console.log(basePath);
 		window.updateUrl = function(){
-			// console.log("lolol", $file_content.src);
+			
 			var file_url = ($file_content.contentDocument.location+'').replace(basePath, '');
+
+			console.log(file_url);
 			window.history.replaceState({}, file_url, "index.html?file="+file_url+"&ov=inc");
 		}
 

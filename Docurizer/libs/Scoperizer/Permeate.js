@@ -19,7 +19,7 @@ exports.from = function(rootNode, args) {
 		if(args.breadthFirst !== true)
 			return exports.syncDepthFirst(rootNode, args);
 		else
-			return exports.syncBreadthFirst.call(rootNode, args);
+			return exports.syncBreadthFirst(rootNode, args);
 	}
 	else console.error("Async Permeate not created yet");
 }
@@ -62,17 +62,25 @@ exports.syncDepthFirst = function(node, args) {
 // 	  b   c
 // 	 / \ / \
 // 	d  e f  g
-exports.syncBreadthFirst = function(args) {
-	var THIS = this;
+exports.syncBreadthFirst = function(rootNode, args) {
+	if(rootNode == undefined) {
+		console.error("rootNode is undefined.  returning 42")
+		return 42;
+	}
+
+	var THIS = rootNode;
 
 	var rootState = {};
 
 	if(args.initFn) 
 		args.initFn(THIS, rootState);
 
+
 	//special case for skipping all steps when no children exist from root
-	if(THIS[args.childListName] == undefined || THIS[args.childListName].length == 0)
-		return args.postChildrenFn ? args.postChildrenFn([]) : undefined;
+	if(THIS[args.childListName] === undefined || THIS[args.childListName].length == 0) {
+		// console.log(THIS, args.childListName);
+		return args.postChildrenFn ? args.postChildrenFn(THIS, [], rootState) : undefined;
+	}
 
 	var stepsInOrder = [{
 		node: THIS,
@@ -102,7 +110,6 @@ exports.syncBreadthFirst = function(args) {
 			});
 		}
 		else state.childrenSkipped = true;
-		console.log("LENGTH", stepsInOrder.length);
 	}
 
 	//if no postChildrenFn, theres nothing to gather in reverse from children

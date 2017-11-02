@@ -66,6 +66,8 @@ body {
 			word-break: keep-all;
 			transition: height 0.1s ease-in;
 			height: 15px;
+
+			border-radius: 4px;
 		}
 
 			body class > a.sameName {
@@ -81,7 +83,7 @@ body {
 
 			body class > a:focus {
 				/*text-decoration: underline;*/
-				background-color: #b9ecba;
+				background-color: #920d4b;
 			}
 
 			body class > a.back_ref {

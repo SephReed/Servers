@@ -1,4 +1,5 @@
 const fs = require('fs');
+const Permeate = require("./Permeate.js");
 
 
 
@@ -78,10 +79,15 @@ exports.RuleSet.prototype.getScope = function(scopeName) {
 	return this.scopes.byID[scopeName];
 }
 
-exports.RuleSet.prototype.computeSubScopes = function(scope) {
+exports.RuleSet.prototype.computeSubScopes = function(scope, branchStack) {
 	var THIS = this;
+	branchStack = branchStack || [];
 	scope = scope || THIS.rootScope;
 	var out = [];
+
+	branchStack.push(scope);
+
+
 	if(scope.allowedSubScopes) {
 		scope.subScopes = scope.allowedSubScopes
 		.map((subScopeName) => {
@@ -95,11 +101,12 @@ exports.RuleSet.prototype.computeSubScopes = function(scope) {
 
 		scope.subScopes.forEach((item) => {out.push(item.name)});
 
+
 		scope.subScopes.filter((subScope) => {
-			return subScope != scope;
+			return branchStack.indexOf(subScope) == -1;
 		}).map(function(subScope){
 			// console.log(subScope);
-			return THIS.computeSubScopes(subScope);
+			return THIS.computeSubScopes(subScope, branchStack);
 		}).forEach(function(subScopePotentials){
 			// console.log(subScopePotentials);
 			subScopePotentials
@@ -110,6 +117,8 @@ exports.RuleSet.prototype.computeSubScopes = function(scope) {
 			});
 		});
 	}
+
+	branchStack.pop();
 	scope.potentialSubScopes = out;
 	return out;
 }
@@ -372,8 +381,18 @@ exports.RuleSet.prototype.scopify = function(file, scopeInfo) {
 			
 			//)};
 			//for cases where an end match encompases other end matches
-			if(scopeChunk.endMatch && scopeChunk.endIndex >= outcome.endIndex && scopeChunk.endMatch.index <= outcome.endIndex)
-				subScopesLeft = false;
+			if(scopeChunk.endMatch && scopeChunk.endIndex >= outcome.endIndex && scopeChunk.endMatch.index <= outcome.endIndex) {
+				//even more special cases where a scope encompasses itself (blocks usually)
+				//makes sure no two nested blocks share the same end point
+				var notSharingEndWithSelf = true;
+				for(var ptr = outcome; notSharingEndWithSelf && ptr != undefined; ptr = ptr.lastSubChunk){
+					if(ptr.scope == thisScope && ptr.endIndex >= scopeChunk.endMatch.index)
+						notSharingEndWithSelf = false;
+				}
+				
+				subScopesLeft = !notSharingEndWithSelf;
+			}
+				
 				// charStart = scopeChunk.endMatch.index;
 			
 			charStart = outcome.endIndex+1;
@@ -632,7 +651,7 @@ exports.ScopeChunk.prototype.getFirstSub = function(searchString, startAfter) {
 }
 
 //TODO: make recursive
-exports.ScopeChunk.prototype.getSubs = function(searchString, startAfter, matchLimit, state) {
+exports.ScopeChunk.prototype.getSubs = function(searchString, startAfter, matchLimit) {
 	var THIS = this;
 	var allMatches = [];
 	var matchLimitHit = allMatches.length >= matchLimit;
@@ -642,11 +661,11 @@ exports.ScopeChunk.prototype.getSubs = function(searchString, startAfter, matchL
 	var currentScopeChunks = [THIS];
 	for(var i = 0; i < matchArgs.length && matchLimitHit == false; i++) {
 		var target = matchArgs[i], 
-			shallow = false;
+			isShallow = false;
 		if(target == ">") {
 			i++;
 			target = matchArgs[i];
-			shallow = true;
+			isShallow = true;
 		}
 
 		var isTargetDepth = i >= matchArgs.length -1;
@@ -656,7 +675,13 @@ exports.ScopeChunk.prototype.getSubs = function(searchString, startAfter, matchL
 		for(var c = 0; c < currentScopeChunks.length && matchLimitHit == false; c++) {
 			var limit = isTargetDepth ? matchLimit - allMatches.length : undefined;
 
-			var matches = currentScopeChunks[c].getSubsOfName(target, null, shallow, limit);
+			var args = {
+				startAfter: null,
+				shallowSearch: isShallow,
+				limit: limit
+			}
+
+			var matches = currentScopeChunks[c].getSubsOfName(target, args);
 			// console.log(matches);
 
 			if(isTargetDepth) {
@@ -686,57 +711,78 @@ exports.ScopeChunk.prototype.getFirstChildSubOfName = function(subScopeName, sta
 }
 
 exports.ScopeChunk.prototype.getFirstSubOfName = function(subScopeName, startAfter, shallowSearch) {
-	return this.getSubsOfName(subScopeName, startAfter, shallowSearch, 1)[0];
+	return this.getSubsOfName(subScopeName, {startAfter: startAfter, shallowSearch: shallowSearch, limit: 1})[0];
 }
 
-exports.ScopeChunk.prototype.getSubsOfName = function(subScopeName, startAfter, shallowSearch, matchLimit, matches) {
+exports.ScopeChunk.prototype.getSubsOfName = function(subScopeName, args) {
 	var THIS = this;
-	matches = matches || [];
-	
-	if(shallowSearch) {
-		//for scenarios where the chunks by name wont help
-		if(startAfter && startAfter.chunk.name != subScopeName)
-			return THIS.hardSubNameSearch(startAfter, subScopeName, matchLimit, matches);
+	args.matches = [];
 
-		var subsOfName = THIS.subChunksByName[subScopeName];
-		if(subsOfName && subsOfName.length) {
-			if(startAfter) {
-				var startIndex = subsOfName.indexOf(startAfter);
-				if(startIndex != -1) {
-					for(var i = startIndex + 1; i > -1 && i < subsOfName.length; i++) {
-						matches.push(subsOfName[i]);
-						if(matches.length >= matchLimit-1)
-							break;
-					}
-				}
-			}
-			else matches = matches.concat(subsOfName);
-		}
-		else if(subScopeName == "*")
-			matches = matches.concat(THIS.subChunks);
-	}
-	else console.error("only shallow search use '>'");
-
-	return matches;
-}
-
-exports.ScopeChunk.prototype.hardShallowSubNameSearch = function(subScopeName, startAfter, matchLimit, matches) {
-	console.error("INCOMPLETE CODE hardSub");
-	var THIS = this;
-	if(THIS.subChunks.length == 0)
-		return undefined;
-
-	if(THIS.contains(startAfter) == false) {
+	if(args.startAfter && args.startAfter.parentChunk != THIS) {
 		console.error("can not startAfter chunk that is not subChunk");
 		return undefined;
 	}
+	
+	//an efficiency used when not doing deep searches, always use ">" when possible
+	if(args.shallowSearch && (args.startAfter == undefined || args.startAfter.chunk.name == subScopeName)) 
+		THIS.fastShallowSubNameSearch(subScopeName, args);	
+	else 
+		THIS.hardSubNameSearch(subScopeName, args);
+	
 
-	var startAt = startAfter ? startAfter.nextChunk : THIS.subChunks[0];
-	for(ptr = startAt; ptr != undefined; ptr = ptr.nextChunk){
-		if(ptr.scope.name == subScopeName || subScopeName == "*")
-			return ptr;
+	return args.matches;
+}
+
+
+
+exports.ScopeChunk.prototype.fastShallowSubNameSearch = function(subScopeName, args) {
+	var THIS = this;
+	var subsOfName = THIS.subChunksByName[subScopeName];
+	if(subsOfName && subsOfName.length) {
+		if(args.startAfter) {
+			var startIndex = subsOfName.indexOf(args.startAfter);
+			if(startIndex != -1) {
+				for(var i = startIndex + 1; i > -1 && i < subsOfName.length; i++) {
+					args.matches.push(subsOfName[i]);
+					if(args.matchLimit !== undefined && args.matches.length >= args.matchLimit-1)
+						break;
+				}
+			}
+		}
+		else {
+			subsOfName.forEach((sub) => {
+				args.matches.push(sub);
+			})
+		} 
 	}
-	return undefined;
+	else if(subScopeName == "*") {
+		THIS.subChunks.forEach((sub) => {
+			args.matches.push(sub);
+		})
+	} 
+}
+
+
+
+exports.ScopeChunk.prototype.hardSubNameSearch = function(subScopeName, args) {
+	var THIS = this;
+	var matches = args.matches;
+	var startAt = args.startAfter ? args.startAfter.nextChunk : THIS.subChunks[0];
+
+	args.startAfter = undefined;
+
+	for(let ptr = startAt; ptr !== undefined;){
+		if(args.matchLimit !== undefined && args.matches.length >= args.matchLimit-1)
+			break;
+
+		if(ptr.scope.name == subScopeName || subScopeName == "*")
+			matches.push(ptr);
+
+		if(args.shallowSearch !== true)
+			ptr.hardSubNameSearch(subScopeName, args);
+
+		ptr = ptr.nextChunk;
+	}
 }
 
 
@@ -759,117 +805,10 @@ exports.ScopeChunk.prototype.hardShallowSubNameSearch = function(subScopeName, s
 //@args.postSubsFn - A function to happen after being called for all the children
 //@args.breadthFirst - boolean
 exports.ScopeChunk.prototype.permeate = function(args) {
-	if(args.initFn == undefined && args.postSubsFn == undefined) return;
-
 	var THIS = this;
-
-	args.state = {};
-	args.rootNode = THIS;
-
-	if(args.isAsync !== true) {
-		if(args.breadthFirst !== true)
-			return THIS.syncPermeateDepthFirst(args);
-		else
-			return THIS.syncPermeateBreadthFirst(args);
-	}
-	else console.error("Async Permeate not created yet");
-}
-
-
-
-// 	depth first
-// 		a
-// 	   / \
-// 	  b   e
-// 	 / \ / \
-// 	c  d f  g
-exports.ScopeChunk.prototype.syncPermeateDepthFirst = function(args) {
-	var THIS = this;
-
-	if(args.initFn)
-		args.initFn(THIS, args.state);
-
-	var childResults = [];
-	THIS.subChunks.forEach((subChunk) =>{
-		//returns an fn with the next step
-		childResults.push(subChunk.syncPermeateDepthFirst(args));
-	});
-
-	// console.log(childResults);
-
-	return args.postSubsFn ? args.postSubsFn(THIS, childResults, args.state) : undefined;
-}
-
-
-
-
-// 	breadth first
-// 		a
-// 	   / \
-// 	  b   c
-// 	 / \ / \
-// 	d  e f  g
-exports.ScopeChunk.prototype.syncPermeateBreadthFirst = function(args) {
-	var THIS = this;
-
-	if(args.initFn) 
-		args.initFn(THIS, args.state);
-
-	if(THIS.subChunks == undefined || THIS.subChunks.length == 0)
-		return args.postSubsFn ? args.postSubsFn([]) : undefined;
-
-	var chunksInOrder = [THIS]
-	var chunkStartPositions = []
-	// var postSubCollectionsFns = [];
-
-	//go through each chunk, first initing, then appending subs to list
-	//does root, then all children, then all grandchildren, ...
-	for(var i = 0; i < chunksInOrder.length; i++) {
-		var chunk = chunksInOrder[i];
-			
-		chunk.subChunks.forEach((sub) => {
-			if(args.initFn) 
-				args.initFn(sub, args.state);
-
-			if(sub.subChunks && sub.subChunks.length)	
-				chunksInOrder.push(sub);
-		});
-		console.log("LENGTH", chunksInOrder.length);
-	}
-
-	//if no postSubsFn, theres nothing to gather in reverse from children
-	if(args.postSubsFn == undefined)
-		return;
-
-
-
-	//for each chunk in reverse breadth order
-	//if it has no children, skip it
-	//otherwise, iterate through children forwards, gathering the results
-	//if the above child has children of its own, there should be a childResultsArray on the queue for it
-	//once all results for a chunks children have been found, add them to the stack
-	var childResultArrays = [];
-	var childResultsIndex = 0;
-	while(chunk = chunksInOrder.pop()) {
-		var childResults = chunk.subChunks.map((sub) => {
-			var grandChildResults;
-			if(sub.subChunks && sub.subChunks.length){
-				if(childResultArrays.length == 0)
-					console.error("Chunk with subs exists, but not childResults on stack")
-
-				grandChildResults = childResultArrays.pop();	
-			}
-			else grandChildResults = [];
-			
-			return args.postSubsFn(sub, grandChildResults, args.state);
-		})
-		childResultArrays.push(childResults);
-	}
-
-	if(childResultArrays.length == 0)
-		console.error("At rootChunk but no childResults on stack")
-
-	return args.postSubsFn(THIS, childResultArrays.pop(), args.state);
+	args.childListName = "subChunks";
+	args.postChildrenFn = args.postSubsFn;
+	return Permeate.from(THIS, args);
 }
 
 
@@ -878,51 +817,6 @@ exports.ScopeChunk.prototype.syncPermeateBreadthFirst = function(args) {
 
 
 
-
-
-
-/********************************
-*    TESTING
-*********************************/
-
-
-if(process.argv[1] == __filename) {
-	console.log("TESTING SCOPERIZER");
-
-	var testName = process.argv[2];
-
-	if(testName == "breadth") {
-		var rootChunk = new exports.ScopeChunk("TEST_MODE");
-		var ID = 0;
-		rootChunk.ID = ID++;
-		for(var i = 0; i < 3; i++) {
-			var subChunk = new exports.ScopeChunk("TEST_MODE");
-			subChunk.ID = ID++;
-			for(var j = 0; j < 4; j++) {
-				var subSubChunk = new exports.ScopeChunk("TEST_MODE");
-				subSubChunk.ID = ID++;
-				subChunk.appendSubChunk(subSubChunk);
-			}
-			rootChunk.appendSubChunk(subChunk);
-		}
-
-
-
-		console.log(rootChunk.permeate({
-			breadthFirst: true,
-			initFn: function(scopeChunk, state) {
-				console.log(scopeChunk.ID);
-			},
-			postSubsFn: function(scopeChunk, childResults, state){
-				console.log(childResults);
-				childResults.unshift(scopeChunk.ID);
-				return childResults.join(",");
-			}
-		}));
-
-	}
-	else console.error(`Test "`+testName+`" not found`);
-}
 
 
 
