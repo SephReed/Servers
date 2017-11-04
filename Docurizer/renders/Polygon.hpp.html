@@ -3,34 +3,34 @@
 </comment><comment>// Student ID: a1686679<br>
 </comment><comment>// Description: Polygon header<br>
 </comment><LooseText><br>
-</LooseText><keyComp>#ifndef</keyComp><LooseText> POLYGON_H_<br>
-</LooseText><keyComp>#define</keyComp><LooseText> POLYGON_H_<br>
+#</LooseText><command><LooseText>ifndef POLYGON_H_<br>
+#define POLYGON_H_<br>
 <br>
-</LooseText><classDef><classNameDef><keyClass>class</keyClass><LooseText> Polygon </LooseText></classNameDef><classDefBlock><LooseText>{<br>
-&emsp;</LooseText><classFnPrivacyBlock><keyClass>public</keyClass><LooseText>:<br>
-&emsp;&emsp;</LooseText><comment>// Constructor for Polygon.<br>
-</comment><LooseText>&emsp;&emsp;</LooseText><comment>//@width is the width of the polygon.<br>
-</comment><LooseText>&emsp;&emsp;</LooseText><comment>//@height (optional) is the width of the polygon<br>
-</comment><LooseText>&emsp;&emsp;</LooseText><fnCall><fnName>Polygon</fnName><args><LooseText>(</LooseText><arg><keyVar>int</keyVar><LooseText> height</LooseText></arg><LooseText>,</LooseText><arg><LooseText> </LooseText><keyVar>int</keyVar><LooseText> width</LooseText></arg><LooseText>)</LooseText></args></fnCall><LooseText>;<br>
+class Polygon {<br>
+&emsp;public:<br>
+&emsp;&emsp;// Constructor for Polygon.<br>
+&emsp;&emsp;//@width is the width of the polygon.<br>
+&emsp;&emsp;//@height (optional) is the width of the polygon<br>
+&emsp;&emsp;</LooseText><fnCall><fnName>Polygon</fnName><LooseText>(</LooseText><fnName><LooseText>int height, int width);<br>
 &emsp;&emsp;</LooseText><comment>// Destructor<br>
-</comment><LooseText>&emsp;&emsp;</LooseText><fnCall><fnName>~Polygon</fnName><args>()</args></fnCall><LooseText>;<br>
+</comment><LooseText>&emsp;&emsp;~Polygon</LooseText></fnName><LooseText>()</LooseText></fnCall><LooseText>;</LooseText></command><LooseText><br>
 &emsp;&emsp;<br>
 &emsp;&emsp;</LooseText><comment>// Getters<br>
-</comment><LooseText>&emsp;&emsp;</LooseText><keyVar>int</keyVar><LooseText> </LooseText><fnCall><fnName>getHeight</fnName><args>()</args></fnCall><LooseText>;<br>
-&emsp;&emsp;</LooseText><keyVar>int</keyVar><LooseText> </LooseText><fnCall><fnName>getWidth</fnName><args>()</args></fnCall><LooseText>;<br>
+</comment><LooseText>&emsp;&emsp;</LooseText><command><LooseText>int </LooseText><fnCall><fnName>getHeight</fnName><LooseText>()</LooseText></fnCall><LooseText>;</LooseText></command><LooseText><br>
+&emsp;&emsp;</LooseText><command><LooseText>int </LooseText><fnCall><fnName>getWidth</fnName><LooseText>()</LooseText></fnCall><LooseText>;</LooseText></command><LooseText><br>
 <br>
 &emsp;&emsp;</LooseText><comment>// Setters<br>
-</comment><LooseText>&emsp;&emsp;</LooseText><keyVar>void</keyVar><LooseText> </LooseText><fnCall><fnName>setHeight</fnName><args><LooseText>(</LooseText><arg><keyVar>int</keyVar><LooseText> height</LooseText></arg><LooseText>)</LooseText></args></fnCall><LooseText>;<br>
-&emsp;&emsp;</LooseText><keyVar>void</keyVar><LooseText> </LooseText><fnCall><fnName>setWidth</fnName><args><LooseText>(</LooseText><arg><keyVar>int</keyVar><LooseText> width</LooseText></arg><LooseText>)</LooseText></args></fnCall><LooseText>;<br>
+</comment><LooseText>&emsp;&emsp;</LooseText><command><LooseText>void </LooseText><fnCall><fnName>setHeight</fnName><LooseText>(</LooseText><fnName>int height);<br>
+&emsp;&emsp;void setWidth</fnName><LooseText>(</LooseText><fnName><LooseText>int width);<br>
 <br>
 &emsp;&emsp;</LooseText><comment>// Virtual area method<br>
-</comment><LooseText>&emsp;&emsp;</LooseText><keyClass>virtual</keyClass><LooseText> </LooseText><keyVar>float</keyVar><LooseText> </LooseText><fnCall><fnName>area</fnName><args>()</args></fnCall><LooseText>;<br>
+</comment><LooseText>&emsp;&emsp;virtual float area</LooseText></fnName><LooseText>()</LooseText></fnCall><LooseText>;</LooseText></command><LooseText><br>
 <br>
-&emsp;</LooseText></classFnPrivacyBlock><classFnPrivacyBlock><keyClass>protected</keyClass><LooseText>:<br>
-&emsp;&emsp;</LooseText><comment>// Member variables<br>
-</comment><LooseText>&emsp;&emsp;</LooseText><keyVar>int</keyVar><LooseText> m_height;<br>
-&emsp;&emsp;</LooseText><keyVar>int</keyVar><LooseText> m_width;<br>
-</LooseText></classFnPrivacyBlock><LooseText>}</LooseText></classDefBlock></classDef><LooseText>;<br>
+&emsp;</LooseText><command>protected:<br>
+&emsp;&emsp;// Member variables<br>
+&emsp;&emsp;int m_height;</command><LooseText><br>
+&emsp;&emsp;</LooseText><command>int m_width;</command><LooseText><br>
+};<br>
 <br>
-</LooseText><keyComp>#endif</keyComp><LooseText> </LooseText><comment>// POLYGON_H_<br>
+#</LooseText><command>endif</command><LooseText> </LooseText><comment>// POLYGON_H_<br>
 </comment></file>

@@ -110,7 +110,7 @@ body {
 			color: #d8c963;
 		}
 
-	keyVar, fnName {
+	keyVar, fnName, typeDef {
 		color: #77d9f1;
 	}
 

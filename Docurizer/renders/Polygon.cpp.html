@@ -8,33 +8,33 @@
 </LooseText><comment>// Constructor for Polygon.<br>
 </comment><comment>//@width is the width of the polygon.<br>
 </comment><comment>//@height (optional) is the width of the polygon<br>
-</comment><LooseText>Polygon::Polygon(</LooseText><keyVar>int</keyVar><LooseText> height, </LooseText><keyVar>int</keyVar><LooseText> width): m_height(height), m_width(width) </LooseText><block>{}</block><LooseText><br>
+</comment><fnDef><fnDefHeader><fnDefTemplate><fnDefTemplateName><fnName>Polygon::Polygon</fnName></fnDefTemplateName><fnDefTemplateArgs><LooseText>(</LooseText><fnDefArgDef><typeDef><keyVar>int</keyVar></typeDef><LooseText> </LooseText><typeDef>height</typeDef></fnDefArgDef><LooseText>,</LooseText><fnDefArgDef><LooseText> </LooseText><typeDef><keyVar>int</keyVar></typeDef><LooseText> </LooseText><typeDef>width):</typeDef><LooseText> </LooseText><typeDef>m_height(height)</typeDef></fnDefArgDef></fnDefTemplateArgs></fnDefTemplate><LooseText>, </LooseText><fnDefTemplate><fnDefTemplateName><fnName>m_width</fnName></fnDefTemplateName><fnDefTemplateArgs><LooseText>(</LooseText><fnDefArgDef><typeDef>width)</typeDef><LooseText> {}<br>
 <br>
 </LooseText><comment>// Destructor<br>
-</comment><LooseText>Polygon::~Polygon() </LooseText><block>{}</block><LooseText><br>
+</comment><typeDef>Polygon::~Polygon()</typeDef><LooseText> {}<br>
 <br>
 </LooseText><comment>// Return the polygon height<br>
-</comment><keyVar>int</keyVar><LooseText> Polygon::getHeight() </LooseText><block><LooseText>{<br>
-&emsp;</LooseText><keyComp>return</keyComp><LooseText> m_height;<br>
-}</LooseText></block><LooseText><br>
+</comment><typeDef><keyVar>int</keyVar></typeDef><LooseText> </LooseText><typeDef>Polygon::getHeight()</typeDef><LooseText> {<br>
+&emsp;</LooseText><typeDef>return</typeDef><LooseText> </LooseText><typeDef>m_height;</typeDef><LooseText><br>
+}<br>
 <br>
 </LooseText><comment>// Return the polygon width<br>
-</comment><keyVar>int</keyVar><LooseText> Polygon::getWidth() </LooseText><block><LooseText>{<br>
-&emsp;</LooseText><keyComp>return</keyComp><LooseText> m_width;<br>
-}</LooseText></block><LooseText><br>
+</comment><typeDef><keyVar>int</keyVar></typeDef><LooseText> </LooseText><typeDef>Polygon::getWidth()</typeDef><LooseText> {<br>
+&emsp;</LooseText><typeDef>return</typeDef><LooseText> </LooseText><typeDef>m_width;</typeDef><LooseText><br>
+}<br>
 <br>
 </LooseText><comment>// Set the polygon height<br>
-</comment><keyVar>void</keyVar><LooseText> Polygon::setHeight(</LooseText><keyVar>int</keyVar><LooseText> height) </LooseText><block>{<br>
-&emsp;m_height = height;<br>
-}</block><LooseText><br>
+</comment><typeDef><keyVar>void</keyVar></typeDef><LooseText> </LooseText><typeDef><LooseText>Polygon::setHeight(</LooseText><keyVar>int</keyVar></typeDef><LooseText> </LooseText><typeDef>height)</typeDef><LooseText> {<br>
+&emsp;</LooseText><typeDef>m_height</typeDef><LooseText> = </LooseText><typeDef>height;</typeDef><LooseText><br>
+}<br>
 <br>
 </LooseText><comment>// Set the polygon width<br>
-</comment><keyVar>void</keyVar><LooseText> Polygon::setWidth(</LooseText><keyVar>int</keyVar><LooseText> width) </LooseText><block>{<br>
-&emsp;m_width = width;<br>
-}</block><LooseText><br>
+</comment><typeDef><keyVar>void</keyVar></typeDef><LooseText> </LooseText><typeDef><LooseText>Polygon::setWidth(</LooseText><keyVar>int</keyVar></typeDef><LooseText> </LooseText><typeDef>width)</typeDef><LooseText> {<br>
+&emsp;</LooseText><typeDef>m_width</typeDef><LooseText> = </LooseText><typeDef>width;</typeDef><LooseText><br>
+}<br>
 <br>
 </LooseText><comment>// This runs if there is no child class (polymorphism) so we return an invalid area<br>
-</comment><keyVar>float</keyVar><LooseText> Polygon::area() </LooseText><block><LooseText>{<br>
-&emsp;</LooseText><keyComp>return</keyComp><LooseText> -1;<br>
-}</LooseText></block><LooseText><br>
+</comment><typeDef><keyVar>float</keyVar></typeDef><LooseText> </LooseText><typeDef>Polygon::area()</typeDef></fnDefArgDef></fnDefTemplateArgs></fnDefTemplate><LooseText> </LooseText></fnDefHeader><block><LooseText>{<br>
+&emsp;</LooseText><command>return -1;</command><LooseText><br>
+}</LooseText></block></fnDef><LooseText><br>
 </LooseText></file>

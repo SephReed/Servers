@@ -17,10 +17,14 @@
 
 #include "la" //comment
 
+this_is_a_command; alsoOne;
 
 
 
 
+someReturnType32 CLASSY:doThing(type1 arg1, int arg2) {
+	doThing();
+}
 
 
 

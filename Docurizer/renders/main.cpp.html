@@ -8,52 +8,72 @@
 </LooseText><include><keyComp>#include</keyComp><LooseText> </LooseText><string>"Triangle.h"</string></include><LooseText><br>
 <br>
 <br>
+<br>
+</LooseText><multiLineComment>/**********************<br>
+*&emsp;&emsp;PARSER<br>
+*&emsp;CRASH COURSE<br>
+**********************/</multiLineComment><LooseText><br>
+<br>
+<br>
+</LooseText><include><keyComp>#include</keyComp><LooseText> </LooseText><string>"la"</string><LooseText> </LooseText></include><comment>//comment<br>
+</comment><LooseText><br>
+</LooseText><command>this_is_a_command;</command><LooseText> </LooseText><command>alsoOne;</command><LooseText><br>
+<br>
+<br>
+<br>
+<br>
+</LooseText><fnDef><fnDefHeader><typeDef>someReturnType32</typeDef><LooseText> </LooseText><fnDefTemplate><fnDefTemplateName><fnName>CLASSY:doThing</fnName></fnDefTemplateName><fnDefTemplateArgs><LooseText>(</LooseText><fnDefArgDef><typeDef>type1</typeDef><LooseText> </LooseText><typeDef>arg1</typeDef></fnDefArgDef><LooseText>,</LooseText><fnDefArgDef><LooseText> </LooseText><typeDef><keyVar>int</keyVar></typeDef><LooseText> </LooseText><typeDef>arg2)</typeDef><LooseText> {<br>
+&emsp;</LooseText><typeDef>doThing();</typeDef><LooseText><br>
+}<br>
+<br>
+<br>
+<br>
 </LooseText><comment>// Prints out some details on a Polygon.<br>
 </comment><comment>// Note that it's not passing through a particular Polygon (like Triangle or Rectangle), rather it's the parent.<br>
-</comment><keyVar>void</keyVar><LooseText> pr</LooseText><keyVar>int</keyVar><LooseText>Details(Polygon* shape) </LooseText><block><LooseText>{<br>
-&emsp;std::cout &lt;&lt; </LooseText><string>"Height: "</string><LooseText> &lt;&lt; shape-&gt;</LooseText><fnCall><fnName>getHeight</fnName><args>()</args></fnCall><LooseText>;<br>
-&emsp;std::cout &lt;&lt; </LooseText><string>", Width: "</string><LooseText> &lt;&lt; shape-&gt;</LooseText><fnCall><fnName>getWidth</fnName><args>()</args></fnCall><LooseText>;<br>
+</comment><typeDef><keyVar>void</keyVar></typeDef><LooseText> </LooseText><typeDef><LooseText>pr</LooseText><keyVar>int</keyVar><LooseText>Details(Polygon*</LooseText></typeDef><LooseText> </LooseText><typeDef>shape)</typeDef><LooseText> {<br>
+&emsp;</LooseText><typeDef>std::cout</typeDef><LooseText> &lt;&lt; "</LooseText><typeDef>Height:</typeDef><LooseText> " &lt;&lt; </LooseText><typeDef>shape-&gt;getHeight();</typeDef><LooseText><br>
+&emsp;</LooseText><typeDef>std::cout</typeDef><LooseText> &lt;&lt; "</LooseText></fnDefArgDef><LooseText>,</LooseText><fnDefArgDef><LooseText> </LooseText><typeDef>Width:</typeDef><LooseText> " &lt;&lt; </LooseText><typeDef>shape-&gt;getWidth();</typeDef><LooseText><br>
 <br>
 &emsp;</LooseText><comment>// Pay particular attention to the results of area(). Even though it's a Polygon, the children produce different results for the function call.<br>
-</comment><LooseText>&emsp;std::cout &lt;&lt; </LooseText><string>", Area: "</string><LooseText> &lt;&lt; shape-&gt;</LooseText><fnCall><fnName>area</fnName><args>()</args></fnCall><LooseText>;<br>
-&emsp;std::cout &lt;&lt; std::endl;<br>
-}</LooseText></block><LooseText><br>
+</comment><LooseText>&emsp;</LooseText><typeDef>std::cout</typeDef><LooseText> &lt;&lt; "</LooseText></fnDefArgDef><LooseText>,</LooseText><fnDefArgDef><LooseText> </LooseText><typeDef>Area:</typeDef><LooseText> " &lt;&lt; </LooseText><typeDef>shape-&gt;area();</typeDef><LooseText><br>
+&emsp;</LooseText><typeDef>std::cout</typeDef><LooseText> &lt;&lt; </LooseText><typeDef>std::endl;</typeDef><LooseText><br>
+}<br>
 <br>
-</LooseText><fnDef><fnDefHeader><returnType><keyVar>int</keyVar></returnType><LooseText> </LooseText><fnCall><fnName>main</fnName><args>()</args></fnCall><LooseText> </LooseText></fnDefHeader><block><LooseText>{<br>
+</LooseText><typeDef><keyVar>int</keyVar></typeDef><LooseText> </LooseText><typeDef>main()</typeDef><LooseText> {<br>
 &emsp;</LooseText><comment>// Create a rectangle on the heap with a height of 5 and a width of 6<br>
-</comment><LooseText>&emsp;Polygon* rectangle = </LooseText><keyComp>new</keyComp><LooseText> </LooseText><fnCall><fnName>Rectangle</fnName><args><LooseText>(</LooseText><arg><num>532</num></arg><LooseText>,</LooseText><arg><LooseText> </LooseText><num>6</num></arg><LooseText>)</LooseText></args></fnCall><LooseText>;<br>
+</comment><LooseText>&emsp;</LooseText><typeDef>Polygon*</typeDef><LooseText> </LooseText><typeDef>rectangle</typeDef><LooseText> = </LooseText><typeDef>new</typeDef><LooseText> </LooseText><typeDef>Rectangle(532</typeDef></fnDefArgDef><LooseText>,</LooseText><fnDefArgDef> 6</fnDefArgDef><LooseText>)</LooseText></fnDefTemplateArgs></fnDefTemplate><LooseText>;<br>
 &emsp;</LooseText><comment>// Print information using getters and method<br>
-</comment><LooseText>&emsp;</LooseText><fnCall><fnName>printDetails</fnName><args><LooseText>(</LooseText><arg>rectangle</arg><LooseText>)</LooseText></args></fnCall><LooseText>;<br>
+</comment><LooseText>&emsp;</LooseText><fnDefTemplate><fnDefTemplateName><fnName>printDetails</fnName></fnDefTemplateName><fnDefTemplateArgs><LooseText>(</LooseText><fnDefArgDef><typeDef>rectangle);</typeDef><LooseText><br>
 &emsp;</LooseText><comment>// Set the height to 10 with a setter<br>
-</comment><LooseText>&emsp;rectangle-&gt;</LooseText><fnCall><fnName>setHeight</fnName><args><LooseText>(</LooseText><arg><num>10</num></arg><LooseText>)</LooseText></args></fnCall><LooseText>;<br>
+</comment><LooseText>&emsp;</LooseText><typeDef>rectangle-&gt;setHeight(10);</typeDef><LooseText><br>
 &emsp;</LooseText><comment>// Set the width to 10 with a setter<br>
-</comment><LooseText>&emsp;rectangle-&gt;</LooseText><fnCall><fnName>setWidth</fnName><args><LooseText>(</LooseText><arg><num>10</num></arg><LooseText>)</LooseText></args></fnCall><LooseText>;<br>
+</comment><LooseText>&emsp;</LooseText><typeDef>rectangle-&gt;setWidth(10);</typeDef><LooseText><br>
 &emsp;</LooseText><comment>// Print information using getters and method<br>
-</comment><LooseText>&emsp;</LooseText><fnCall><fnName>printDetails</fnName><args><LooseText>(</LooseText><arg>rectangle</arg><LooseText>)</LooseText></args></fnCall><LooseText>;<br>
+</comment><LooseText>&emsp;</LooseText><typeDef><LooseText>pr</LooseText><keyVar>int</keyVar><LooseText>Details(rectangle);</LooseText></typeDef><LooseText><br>
 &emsp;</LooseText><comment>// Cleanup the memory in the heap<br>
-</comment><LooseText>&emsp;</LooseText><keyComp>delete</keyComp><LooseText> rectangle;<br>
+</comment><LooseText>&emsp;</LooseText><typeDef>delete</typeDef><LooseText> </LooseText><typeDef>rectangle;</typeDef><LooseText><br>
 <br>
 &emsp;</LooseText><comment>// Create a triangle on the heap with a height of 7 and a width of 9<br>
-</comment><LooseText>&emsp;Polygon* triangle = </LooseText><keyComp>new</keyComp><LooseText> </LooseText><fnCall><fnName>Triangle</fnName><args><LooseText>(</LooseText><arg><num>7</num></arg><LooseText>,</LooseText><arg><LooseText> </LooseText><num>9</num></arg><LooseText>)</LooseText></args></fnCall><LooseText>;<br>
+</comment><LooseText>&emsp;</LooseText><typeDef>Polygon*</typeDef><LooseText> </LooseText><typeDef>triangle</typeDef><LooseText> = </LooseText><typeDef>new</typeDef><LooseText> </LooseText><typeDef>Triangle(7</typeDef></fnDefArgDef><LooseText>,</LooseText><fnDefArgDef> 9</fnDefArgDef><LooseText>)</LooseText></fnDefTemplateArgs></fnDefTemplate><LooseText>;<br>
 &emsp;</LooseText><comment>// Print information using getters and method<br>
-</comment><LooseText>&emsp;</LooseText><fnCall><fnName>printDetails</fnName><args><LooseText>(</LooseText><arg>triangle</arg><LooseText>)</LooseText></args></fnCall><LooseText>;<br>
+</comment><LooseText>&emsp;</LooseText><fnDefTemplate><fnDefTemplateName><fnName>printDetails</fnName></fnDefTemplateName><fnDefTemplateArgs><LooseText>(</LooseText><fnDefArgDef><typeDef>triangle);</typeDef><LooseText><br>
 &emsp;</LooseText><comment>// Set the height to 3 with a setter<br>
-</comment><LooseText>&emsp;triangle-&gt;</LooseText><fnCall><fnName>setHeight</fnName><args><LooseText>(</LooseText><arg><num>3</num></arg><LooseText>)</LooseText></args></fnCall><LooseText>;<br>
+</comment><LooseText>&emsp;</LooseText><typeDef>triangle-&gt;setHeight(3);</typeDef><LooseText><br>
 &emsp;</LooseText><comment>// Set the width to 4 with a setter<br>
-</comment><LooseText>&emsp;triangle-&gt;</LooseText><fnCall><fnName>setWidth</fnName><args><LooseText>(</LooseText><arg><num>4</num></arg><LooseText>)</LooseText></args></fnCall><LooseText>;<br>
+</comment><LooseText>&emsp;</LooseText><typeDef>triangle-&gt;setWidth(4);</typeDef><LooseText><br>
 &emsp;</LooseText><comment>// Print information using getters and method<br>
-</comment><LooseText>&emsp;</LooseText><fnCall><fnName>printDetails</fnName><args><LooseText>(</LooseText><arg>triangle</arg><LooseText>)</LooseText></args></fnCall><LooseText>;<br>
+</comment><LooseText>&emsp;</LooseText><typeDef><LooseText>pr</LooseText><keyVar>int</keyVar><LooseText>Details(triangle);</LooseText></typeDef><LooseText><br>
 &emsp;</LooseText><comment>// Cleanup the memory in the heap<br>
-</comment><LooseText>&emsp;</LooseText><keyComp>delete</keyComp><LooseText> triangle;<br>
+</comment><LooseText>&emsp;</LooseText><typeDef>delete</typeDef><LooseText> </LooseText><typeDef>triangle;</typeDef><LooseText><br>
 <br>
 <br>
-&emsp;</LooseText><conditional><keyComp>if</keyComp><args><LooseText>(</LooseText><arg>lalal</arg><LooseText>)</LooseText></args><LooseText> </LooseText><block><LooseText>{<br>
+&emsp;</LooseText><typeDef>if(lalal)</typeDef></fnDefArgDef></fnDefTemplateArgs></fnDefTemplate><LooseText> </LooseText></fnDefHeader><block><LooseText>{<br>
 &emsp;&emsp;</LooseText><comment>//go to here<br>
 </comment><LooseText><br>
-&emsp;}</LooseText></block></conditional><LooseText><br>
+&emsp;}</LooseText></block></fnDef><LooseText><br>
 <br>
 <br>
 <br>
-&emsp;</LooseText><keyComp>return</keyComp><LooseText> 0;<br>
-}</LooseText></block></fnDef><LooseText><br>
+&emsp;</LooseText><command>return 0;</command><LooseText><br>
+}<br>
 </LooseText></file>

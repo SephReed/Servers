@@ -439,6 +439,20 @@ exports.Scope = function(scopeDef) {
 
 	if(THIS.end == undefined)
 		THIS.startInclusive = true;
+
+	if(THIS.allowedSubScopes !== undefined) {
+		for(var i = 0; i < THIS.allowedSubScopes.length; i++){
+			var subScopeNameOrList = THIS.allowedSubScopes[i];
+			if(typeof subScopeNameOrList == "object") {
+				THIS.allowedSubScopes.splice(i, 1);
+				i--;
+
+				subScopeNameOrList.forEach((subScopeName) => {
+					THIS.allowedSubScopes.push(subScopeName);
+				})
+			}
+		};
+	}
 }
 
 
@@ -789,12 +803,6 @@ exports.ScopeChunk.prototype.hardSubNameSearch = function(subScopeName, args) {
 
 
 
-
-
-
-
-
-
 /********************************
 *    PERMEATE
 *********************************/
@@ -810,6 +818,39 @@ exports.ScopeChunk.prototype.permeate = function(args) {
 	args.postChildrenFn = args.postSubsFn;
 	return Permeate.from(THIS, args);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/********************************
+*    RegExpHelper
+*********************************/
+
+exports.RegExpHelper = function(regExpStringOrObj) {
+	var regexString;
+	if(typeof regExpStringOrObj == "object")
+		regexString = regExpStringOrObj.source;
+
+	else regexString = regExpStringOrObj;
+
+	regexString = `(`+regexString+`)|\\n|.`;
+}
+
+
+
 
 
 

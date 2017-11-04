@@ -5,13 +5,17 @@ const Scoperizer = require('../../Scoperizer.js');
 
 exports.root = {
 	name: "file",
-	allowedSubScopes: ["include", "block", "fnDef", "classDef", "string", "keyComp", "keyClass", "keyVar", "comment", "multiLineComment"]
+	// allowedSubScopes: ["include", "block", "fnDef", "classDef", "string", "keyComp", "keyClass", "keyVar", "comment", "multiLineComment"]
+	allowedSubScopes: ["include", "command", "fnDef", "classDef", "comment", "multiLineComment"]
 }
 
 
 //Common groups.
 var COMMENTS = ["comment", "multiLineComment"];
 var COMMON_END_CASE_BREAKERS = ["string", "comment", "multiLineComment"]
+
+//Common Regexs
+var LINE_ENDS = /\n|$|\/\//;
 
 
 
@@ -26,7 +30,7 @@ exports.list = [
 		start:  "/\\*",
 		startInclusive: true,
 		end: "\\*/|$",
-		endInclusive : true
+		endInclusive : true,
 	},
 	{
 		name: "comment",
@@ -52,11 +56,120 @@ exports.list = [
 		name: "include",
 		start:  "#include",
 		startInclusive: true,
-		end: /\n|$/,
+		end: LINE_ENDS,
 		endInclusive: false,
 		allowedSubScopes: ["keyComp", "string"],
-		endCaseBreakers: COMMENTS
 	},
+
+
+
+
+	{
+		name: "fnDef",
+		start: /\b.+\{/,
+		// start: "\\w.*\\(",
+		startInclusive: true,
+		end: /\}/,
+		endInclusive: true,
+		allowedSubScopes: ["fnDefHeader", "block", COMMENTS]
+	},
+		{
+			name: "fnDefHeader",
+			start: /\b./,
+			startInclusive: true,
+			end: "{",
+			endInclusive: false,
+			allowedSubScopes: ["typeDef", "fnDefTemplate", COMMENTS]
+		},
+
+			{
+				name: "fnDefTemplate",
+				start: /\b\S+\(/,
+				startInclusive: true,
+				end: /\)/,
+				endInclusive: true,
+				allowedSubScopes: ["fnDefTemplateName", "fnDefTemplateArgs", COMMENTS]
+			},
+
+				{
+					name: "fnDefTemplateArgs",
+					start: /\(/,
+					startInclusive: true,
+					end: /\)/,
+					endInclusive: true,
+					allowedSubScopes: ["fnDefArgDef", COMMENTS]
+				},
+
+					{
+						name: "fnDefArgDef",
+						start: /\(|,/,
+						startInclusive: false,
+						end: /\)|,/,
+						endInclusive: false,
+						allowedSubScopes: ["typeDef", COMMENTS]
+					},
+
+				{
+					name: "fnDefTemplateName",
+					start: /\b[^\s:]/,
+					startInclusive: true,
+					end: /\(/,
+					endInclusive: false,
+					allowedSubScopes: ["fnName", COMMENTS]
+				},
+
+
+			{
+				name: "typeDef",
+				start: /\b\S/,
+				startInclusive: true,
+				end: /[\s,]/,
+				endInclusive: false,
+				allowedSubScopes: ["keyVar"]
+			},
+
+			
+
+
+	{
+		name: "block",
+		start:  `\\{`,
+		startInclusive: true,
+		end: `\\}`,
+		endInclusive : true,
+		allowedSubScopes: ["conditional", "command", COMMENTS]
+	},
+		{
+			name: "fnCall",
+			start: /\b\S+\(/,
+			startInclusive: true,
+			end: /\)/,
+			endInclusive: true,
+			allowedSubScopes: ["fnName", "args", COMMENTS]
+		},
+
+			{
+				name: "fnName",
+				start: /\b\w/,
+				startInclusive: true,
+				end: /\(/,
+				endInclusive: false,
+				allowedSubScopes: COMMENTS
+			},
+
+		{
+			name: "command",
+			start:  /\b\S/,
+			startInclusive: true,
+			end: ";",
+			endInclusive: true,
+			allowedSubScopes: ["fnCall", "assignment"],
+		},
+
+
+
+
+	
 	// {
 	// 	name: "classDef",
 	// 	start: / *class/,
@@ -117,42 +230,13 @@ exports.list = [
 	// 			// 		endInclusive: true,
 	// 			// 		allowedSubScopes: ["keyComp", "keyClass", "keyVar", "comment", "num"]
 	// 			// 	},
-	// {
-	// 	name: "block",
-	// 	start:  `\\{`,
-	// 	startInclusive: true,
-	// 	end: `\\}`,
-	// 	endInclusive : true,
-	// 	allowedSubScopes: ["conditional", "fnCall", "block", "keyComp", "keyClass", "keyVar", "comment", "multiLineComment", "string"]
-	// },
+	
 
-	// {
-	// 	name: "fnDef",
-	// 	start: / *\w[^;\{]*\s*\{/,
-	// 	// start: "\\w.*\\(",
-	// 	startInclusive: true,
-	// 	end: /\}/,
-	// 	endInclusive: true,
-	// 	allowedSubScopes: ["fnDefHeader", "block", "fnDefBlock", "keyComp", "keyClass", "keyVar", "comment", "multiLineComment"]
-	// },
+	
 
-	// 	{
-	// 		name: "fnDefHeader",
-	// 		start: "\\w",
-	// 		startInclusive: true,
-	// 		end: ";|\\{",
-	// 		endInclusive: false,
-	// 		allowedSubScopes: ["returnType", "fnCall", "keyComp", "keyClass", "keyVar", "comment", "multiLineComment"]
-	// 	},
+	
 
-	// 		{
-	// 			name: "returnType",
-	// 			start: /\w+(?= +.+\()/,
-	// 			startInclusive: true,
-	// 			end: / /,
-	// 			endInclusive: false,
-	// 			allowedSubScopes: ["keyVar"]
-	// 		},
+	
 
 
 			
@@ -167,17 +251,7 @@ exports.list = [
 	// 		},
 
 
-	// 		{
-	// 			name: "fnCall",
-	// 			// start: "[^\\w~](?=[A-Za-z_~]\\w*\\s*\\()",  //\W[A-Za-z_]\w*\s*\(
-	// 			// startInclusive: false,
-	// 			// start: "[A-Za-z_~]\\w*\\s*(>>)?\\(",  //\W[A-Za-z_]\w*\s*\(
-	// 			start: /[A-Za-z_~\[\]]\w*\s*(<<)?\(/,
-	// 			startInclusive: true,
-	// 			end: "\\)",
-	// 			endInclusive: true,
-	// 			allowedSubScopes: ["fnName", "args", "keyComp", "keyClass", "keyVar", "comment", "multiLineComment", "string"]
-	// 		},
+	
 
 	// 			{
 	// 				name: "fnName",
