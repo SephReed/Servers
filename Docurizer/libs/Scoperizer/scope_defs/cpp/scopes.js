@@ -19,6 +19,7 @@ var LINE_ENDS = /\n|$|\/\//;
 
 
 
+exports.anywhereComments = /\/\*.*\*\//
 
 
 

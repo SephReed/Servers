@@ -63,6 +63,8 @@ exports.RuleSet = function(scopeDefs) {
 	scopeDefs.list.forEach(function(scopeDef, index) {
 
 		scopeDef.priority = scopeDefs.list.length - index;
+		scopeDef.startID = 2*index;
+		scopeDef.endID = scopeDef.startID + 1;
 		var scope = new exports.Scope(scopeDef);
 
 		if(scopeDef == scopeDefs.root)
@@ -135,6 +137,9 @@ exports.RuleSet.prototype.computeSubScopes = function(scope, branchStack) {
 
 //use depthMode for cases where read through / skip is effecient
 exports.RuleSet.prototype.scopify = function(file, scopeInfo) {
+	if(file.allRegexs == undefined)
+		file.allRegexs = [];
+
 	var THIS = this;
 
 	scopeInfo = scopeInfo || {
@@ -180,8 +185,6 @@ exports.RuleSet.prototype.scopify = function(file, scopeInfo) {
 
 
 	var addLooseText = function(endIndex){
-		// charStart = Math.max(charStart, scopeChunk.startIndex);
-		
 		if(charStart <= endIndex) {
 			var looseTextChunk = new exports.ScopeChunk(file, {
 				parentChunk: scopeChunk,
@@ -190,11 +193,6 @@ exports.RuleSet.prototype.scopify = function(file, scopeInfo) {
 				endIndex: endIndex
 			});
 			scopeChunk.appendSubChunk(looseTextChunk);
-			// scopeChunk.subChunks.push({
-			// 	file: file,
-			// 	startIndex: charStart,
-			// 	endIndex: endIndex-1,
-			// })
 			charStart = endIndex+1;
 		}
 	}
@@ -257,7 +255,7 @@ exports.RuleSet.prototype.scopify = function(file, scopeInfo) {
 	//ie. bracket in bracket {{ match on loop 1-->} match on loop 2-->}
 	var progressEndMatchPointID = function(soonestIndex, indexIsEnd) {
 		if(thisScope != THIS.rootScope){ 
-			var regex = allRegexs[thisScope.end];
+			var regex = allRegexs[thisScope.endID];
 			
 			progressMatchPointID(thisScope.name, endMatchPointIDs, regex, soonestIndex, indexIsEnd);
 			var endPointID = endMatchPointIDs[thisScope.name];
@@ -298,7 +296,7 @@ exports.RuleSet.prototype.scopify = function(file, scopeInfo) {
 		//is after the current charStart.
 		for(var i in subScopes) {
 			var scope = subScopes[i];
-			progressMatchPointID(scope.name, startMatchPointIDs, allRegexs[scope.start], charStart);
+			progressMatchPointID(scope.name, startMatchPointIDs, allRegexs[scope.startID], charStart);
 		}
 
 		//compare all upcoming scopes, find the soonest one to start
@@ -310,7 +308,7 @@ exports.RuleSet.prototype.scopify = function(file, scopeInfo) {
 		for(var i in subScopes) {
 			var subScope = subScopes[i];
 			
-			var regex = allRegexs[subScope.start];
+			var regex = allRegexs[subScope.startID];
 			var name = subScope.name;
 			var matchNum = startMatchPointIDs[name];
 			var match = regex.matchPoints[matchNum];
@@ -520,16 +518,16 @@ exports.ScopeChunk = function(file, scopeInfo) {
 	//as well as the end regex for this scope
 	var allRegexs = THIS.file.allRegexs;
 	for(var i in THIS.scope.subScopes) {
-		var keyString = THIS.scope.subScopes[i].start;
-		if(allRegexs[keyString] == undefined) {
-			allRegexs[keyString] = new RegExp(keyString, 'g');
-			allRegexs[keyString].matchPoints = [];
+		var startID = THIS.scope.subScopes[i].startID;
+		if(allRegexs[startID] == undefined) {
+			allRegexs[startID] = new RegExp(THIS.scope.subScopes[i].start, 'g');
+			allRegexs[startID].matchPoints = [];
 		}
 	}
 
 
 	if(scopeInfo.matchID !== undefined) {
-		THIS.startMatch = allRegexs[THIS.scope.start].matchPoints[scopeInfo.matchID];
+		THIS.startMatch = allRegexs[THIS.scope.startID].matchPoints[scopeInfo.matchID];
 		THIS.startIndex = THIS.startMatch.index;
 		if(THIS.scope.startInclusive == false)
 			THIS.startIndex += THIS.startMatch.text.length;
@@ -549,10 +547,10 @@ exports.ScopeChunk = function(file, scopeInfo) {
 		THIS.endIndex = -1;
 
 		//ensure that regex for end is initialized
-		var keyString = THIS.scope.end;
-		if(allRegexs[keyString] == undefined) {
-			allRegexs[keyString] = new RegExp(keyString, 'g');
-			allRegexs[keyString].matchPoints = [];
+		var endID = THIS.scope.endID;
+		if(allRegexs[endID] == undefined) {
+			allRegexs[endID] = new RegExp(THIS.scope.end, 'g');
+			allRegexs[endID].matchPoints = [];
 		}
 	}
 

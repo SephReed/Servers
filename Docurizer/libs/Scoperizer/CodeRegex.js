@@ -1,5 +1,8 @@
 
-exports.CodeRegex = function(normRegExpOrString, ruleSet) {
+
+
+
+exports.CodeRegex = function(normRegExpOrString, nulledChars) {
 	var THIS = this;
 
 	if(typeof normRegExpOrString == "object")
@@ -7,23 +10,28 @@ exports.CodeRegex = function(normRegExpOrString, ruleSet) {
 	else
 		THIS.source = normRegExpOrString;
 
+	if(nulledChars && nulledChars.length === undefined)
+		nulledChars = [nulledChars];
+
+	THIS.nulledChars = nulledChars;
 	THIS.numCapturingGroups = 0;
 	THIS.qualities = new Quality(THIS, 0);
 }
 
 
 
-exports.CodeRegex.prototype.matchesStart = function(string) {
+exports.CodeRegex.prototype.matches = function(string) {
 	return this.matchesAt(string, 0);
 };
 
+exports.CodeRegex.prototype.matchesAt = function(string, startIndex) {
+	return this.matchesAtWithin(string, 0, string.length);
+}
 
-exports.CodeRegex.prototype.matchesAt = function(string, index) {
+exports.CodeRegex.prototype.matchesAtWithin = function(string, startIndex, endIndex) {
 	// console.log("searching for", this.source, "in", string)
-	return this.qualities.execAtWithin(string, index);
+	return this.qualities.execAtWithin(string, startIndex, endIndex);
 };
-
-
 
 
 
@@ -76,7 +84,7 @@ var Quality = function(regex, index, capturingGroups) {
 	for(;listComplete == false && index < source.length; index++) {
 		var command = source.charAt(index);
 		if(command == "\\") {
-			state.index++;
+			index++;
 			command += source.charAt(index);
 
 			var isInverse = false;
@@ -424,9 +432,15 @@ Quality.prototype.execAtWithin = function(stringToMatch, indexToCheck, limitingI
 		return undefined;
 	}
 
-	// console.log("exec ", this.toString(), "at", stringToMatch.substr(indexToCheck, 8));
-
 	var THIS = this;
+
+	if(THIS.regex.nulledChars) {
+		var skipChars = THIS.regex.nulledChars.matchesAt(stringToMatch, indexToCheck);
+		if(skipChars && skipChars.length)
+			indexToCheck += skipChars.length;
+	}
+
+	// console.log("exec ", this.toString(), "at", stringToMatch.substr(indexToCheck, 8));
 
 	args = args || {
 		matchCount: 0,
@@ -520,12 +534,11 @@ Quality.prototype.matchCountWithinMax = function(matchCount) {
 
 
 
-
-
+var COMMENT_BlOCK = new exports.CodeRegex("/\/*.*\/*/");
 
 if(process.argv[1] == __filename) {
 	var TESTS = [
-		["(a|b(c|d)?)+", "bcabdabaneanbbadadbadnbaetnbdbteadbanbdanb"]
+		["(a|b(c|d)?)+", "bc/*zzzz*/abdabaneanbbadadbadnbaetnbdbteadbanbdanb"]
 	]
 
 
@@ -566,7 +579,7 @@ if(process.argv[1] == __filename) {
 	}
 
 	else {
-		var regex = new exports.CodeRegex(testVals[0]);
+		var regex = new exports.CodeRegex(testVals[0], COMMENT_BlOCK);
 		console.log("searching", stringToSearch, 'for', regex.source)
 		console.log(regex.matchesStart(stringToSearch))
 	}
