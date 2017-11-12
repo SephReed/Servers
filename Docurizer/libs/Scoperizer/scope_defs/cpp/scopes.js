@@ -1,172 +1,207 @@
 const Scoperizer = require('../../Scoperizer.js');
 
 
-
+exports.name = "c++";
 
 exports.root = {
 	name: "file",
 	// allowedSubScopes: ["include", "block", "fnDef", "classDef", "string", "keyComp", "keyClass", "keyVar", "comment", "multiLineComment"]
-	allowedSubScopes: ["include", "command", "fnDef", "classDef", "comment", "multiLineComment"]
+	allowedSubScopes: ["include", "command", "fnDef", "classDef"]
 }
 
 
 //Common groups.
 var COMMENTS = ["comment", "multiLineComment"];
 var COMMON_END_CASE_BREAKERS = ["string", "comment", "multiLineComment"]
+// var FN_CALL = /(\w\S*)(\(.*\))/
 
 //Common Regexs
 var LINE_ENDS = /\n|$|\/\//;
 
 
 
-exports.anywhereComments = /\/\*.*\*\//
+exports.anywhereScopes = [
+	{
+		start:  /\/\*[\s\S]*\*\//,
+	},
+	{
+		start: /\/\/.*/,
+	}
+	
+	// {
+	// 	name: "multiLineComment",
+	// 	start:  "/\\*",
+	// 	startInclusive: true,
+	// 	end: "\\*/|$",
+	// 	endInclusive : true,
+	// },
+]
 
+
+var fakeFnDef = {
+	name: "fnDef",
+	start: /(?:(\w\S*)\s+)?(\w\S*)(\(.*\))\s*{/,
+	// start: "\\w.*\\(",
+	startInclusive: true,
+	end: /\}/,
+	endInclusive: true,
+	matchedSubScopes: ["typeDef", "fnName", "fnDefTemplateArgs"],
+	allowedSubScopes: ["fnDefHeader", "block", COMMENTS]
+}
 
 
 
 exports.list = [
 	exports.root,
-	{
-		name: "multiLineComment",
-		start:  "/\\*",
-		startInclusive: true,
-		end: "\\*/|$",
-		endInclusive : true,
-	},
-	{
-		name: "comment",
-		start:  "//",
-		startInclusive: true,
-		end: /\n|$/,
-		endInclusive : true,
-		allowedSubScopes: ["TODO"]
-	},
-		{
-			name: "TODO",
-			start:  "//TODO:",
-			startInclusive: true,
-			end: /\n|$/,
-			endInclusive : false,
-		},
+	// {
+	// 	name: "comment",
+	// 	start:  "//",
+	// 	startInclusive: true,
+	// 	end: /\n|$/,
+	// 	endInclusive : true,
+	// 	allowedSubScopes: ["TODO"]
+	// },
+	// 	{
+	// 		name: "TODO",
+	// 		start:  "//TODO:",
+	// 		startInclusive: true,
+	// 		end: /\n|$/,
+	// 		endInclusive : false,
+	// 	},
 
-	{
-		name: "string",
-		start:  /("|'|`)(?:\\\1|.)*?\1/,
-	},
+	
 	{
 		name: "include",
 		start:  "#include",
 		startInclusive: true,
-		end: LINE_ENDS,
+		end: /\n/,
 		endInclusive: false,
 		allowedSubScopes: ["keyComp", "string"],
 	},
-
-
-
-
 	{
 		name: "fnDef",
-		start: /\b.+\{/,
+		start: /(?:(\w\S*)\s+)?(\w\S*)(\(.*\))\s*{/,
 		// start: "\\w.*\\(",
 		startInclusive: true,
 		end: /\}/,
 		endInclusive: true,
-		allowedSubScopes: ["fnDefHeader", "block", COMMENTS]
+		capturedScopesNames: ["typeDef", "fnName", "ArgDefs"],
+		allowedSubScopes: ["conditionTree", "command"]
 	},
+
 		{
-			name: "fnDefHeader",
-			start: /\b./,
-			startInclusive: true,
-			end: "{",
-			endInclusive: false,
-			allowedSubScopes: ["typeDef", "fnDefTemplate", COMMENTS]
+			name: "typeDef",
+		},
+
+
+		{
+			name: "ArgDefs",
+			allowedSubScopes: ["ArgDef"]
 		},
 
 			{
-				name: "fnDefTemplate",
-				start: /\b\S+\(/,
-				startInclusive: true,
-				end: /\)/,
-				endInclusive: true,
-				allowedSubScopes: ["fnDefTemplateName", "fnDefTemplateArgs", COMMENTS]
+				name: "ArgDef",
+				start: /(\b\w[^,\s]*)\s+(\b\w[^,\s\)]*)/,
+				capturedScopesNames: ["typeDef", "fnName"],
 			},
 
-				{
-					name: "fnDefTemplateArgs",
-					start: /\(/,
-					startInclusive: true,
-					end: /\)/,
-					endInclusive: true,
-					allowedSubScopes: ["fnDefArgDef", COMMENTS]
-				},
 
-					{
-						name: "fnDefArgDef",
-						start: /\(|,/,
-						startInclusive: false,
-						end: /\)|,/,
-						endInclusive: false,
-						allowedSubScopes: ["typeDef", COMMENTS]
-					},
-
-				{
-					name: "fnDefTemplateName",
-					start: /\b[^\s:]/,
-					startInclusive: true,
-					end: /\(/,
-					endInclusive: false,
-					allowedSubScopes: ["fnName", COMMENTS]
-				},
-
+		{
+			name: "conditionTree",
+			start: "if",
+			startInclusive: true,
+			// end: "\\}",
+			end: /\s+(?!(?:else|if|\s))/,
+			endInclusive: false,
+			allowedSubScopes: ["condition", "default"]
+		},
 
 			{
-				name: "typeDef",
-				start: /\b\S/,
+				name: "condition",
+				start: /((?:else\s+)?if)(\([\s\S]*?\))\s*{/,
 				startInclusive: true,
-				end: /[\s,]/,
-				endInclusive: false,
-				allowedSubScopes: ["keyVar"]
+				end: "\}",
+				endInclusive: true,
+				capturedScopesNames: ["conditionType", "booleanable"],
+				allowedSubScopes: ["conditionTree", "command"]
+			},
+
+				{ name: "conditionType",},
+				{ name: "booleanable",},
+
+			{
+				name: "default",
+				start: /(else)\s*{/,
+				startInclusive: true,
+				end: "\}",
+				endInclusive: true,
+				capturedScopesNames: ["conditionType"],
+				allowedSubScopes: ["conditionTree", "command"]
 			},
 
 			
-
-
-	{
-		name: "block",
-		start:  `\\{`,
-		startInclusive: true,
-		end: `\\}`,
-		endInclusive : true,
-		allowedSubScopes: ["conditional", "command", COMMENTS]
-	},
 		{
-			name: "fnCall",
-			start: /\b\S+\(/,
-			startInclusive: true,
-			end: /\)/,
-			endInclusive: true,
-			allowedSubScopes: ["fnName", "args", COMMENTS]
+			name: "command",
+			start: /\b(.*?);/,
+			capturedScopesNames: ["statement"]
 		},
 
 			{
-				name: "fnName",
-				start: /\b\w/,
-				startInclusive: true,
-				end: /\(/,
-				endInclusive: false,
-				allowedSubScopes: COMMENTS
+				name: "statement",
+				// start:  /^[\s\S]*$/,
+				allowedSubScopes: ["fnCall", "equal", "bitLeft", "ptr", "string", "num"],
 			},
 
-		{
-			name: "command",
-			start:  /\b\S/,
-			startInclusive: true,
-			end: ";",
-			endInclusive: true,
-			allowedSubScopes: ["fnCall", "assignment"],
-		},
+				{ name: "operator",},
 
+				{
+					name: "fnCall",
+					start: /(\w+)(\(.*\))/,
+					capturedScopesNames: ["fnName", "args"]
+				},
+
+					{ name: "fnName",},
+
+					{
+						name: "args",
+						allowedSubScopes: ["arg"]
+					},
+
+					{
+						name: "arg",
+						start: /\b(\w[^,\s\)]*)/,
+						capturedScopesNames: ["statement"]
+						// allowedSubScopes: ["num"]
+					},
+
+				{
+					name: "equal",
+					start:  /^([\s\S]*?)(=)([\s\S]*)$/,
+					capturedScopesNames: ["reciever", "operator", "statement"]
+				},	
+
+					{
+						name: "reciever",
+						start:  /(?:(\w\S*)\s+)?(\w\S*)/,
+						capturedScopesNames: ["typeDef", "varName"]
+					},	
+
+						{ name: "varName",},
+
+				{
+					name: "bitLeft",
+					start:  /^([\s\S]*?)(<<)([\s\S]*)$/,
+					capturedScopesNames: ["statement", "operator", "statement"]
+				},	
+
+				{
+					name: "ptr",
+					start:  /^([\s\S]*?)(->)([\s\S]*)$/,
+					capturedScopesNames: ["statement", "operator", "statement"]
+				},
+					
+
+	
 
 
 
@@ -242,14 +277,7 @@ exports.list = [
 
 			
 
-	// 		{
-	// 			name: "conditional",
-	// 			start: "if",  //\W[A-Za-z_]\w*\s*\(
-	// 			startInclusive: true,
-	// 			end: "\\}",
-	// 			endInclusive: true,
-	// 			allowedSubScopes: ["block", "args", "keyComp", "keyClass", "keyVar", "comment", "multiLineComment"]
-	// 		},
+			
 
 
 	
@@ -295,7 +323,12 @@ exports.list = [
 	},
 	{
 		name: "num",
-		start: "\\d+\\.?\\d*",
+		start: /\d+\.?\d*/,
+	},
+	{
+		name: "string",
+		start:  /("|'|`)(?:\\\1|.)*?\1/,
+		// start:  /".*"/,
 	},
 
 ]

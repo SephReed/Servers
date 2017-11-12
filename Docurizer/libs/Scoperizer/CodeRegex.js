@@ -1,4 +1,8 @@
-
+//Seph, remeber that this is your version of the groundwork for a future self made language.  
+//You'll not be achieving said language unless you create something which can parse it.
+//But if you can make something that can parse anything, that's even better.  You will have a tool
+//not only built for compiling, but also for pretifying, and parsing into docs.  The overhead is a
+//hassle, but worth it in the end.
 
 
 
@@ -10,8 +14,8 @@ exports.CodeRegex = function(normRegExpOrString, nulledChars) {
 	else
 		THIS.source = normRegExpOrString;
 
-	if(nulledChars && nulledChars.length === undefined)
-		nulledChars = [nulledChars];
+	// if(nulledChars && nulledChars.length === undefined)
+	// 	nulledChars = [nulledChars];
 
 	THIS.nulledChars = nulledChars;
 	THIS.numCapturingGroups = 0;
@@ -20,7 +24,7 @@ exports.CodeRegex = function(normRegExpOrString, nulledChars) {
 
 
 
-exports.CodeRegex.prototype.matches = function(string) {
+exports.CodeRegex.prototype.matchesStart = function(string) {
 	return this.matchesAt(string, 0);
 };
 
@@ -32,6 +36,56 @@ exports.CodeRegex.prototype.matchesAtWithin = function(string, startIndex, endIn
 	// console.log("searching for", this.source, "in", string)
 	return this.qualities.execAtWithin(string, startIndex, endIndex);
 };
+
+
+
+exports.CodeRegex.prototype.findMatchesFrom = function(string, startIndex) {
+	return this.findMatchesInSpan(string, startIndex, undefined, undefined);
+}
+
+
+exports.CodeRegex.prototype.findNextMatchFrom = function(string, startIndex) {
+	return this.findNextMatchInSpan(string, startIndex, undefined)[0];
+}
+
+exports.CodeRegex.prototype.findNextMatchInSpan = function(string, startIndex, endIndex) {
+	return this.findMatchesInSpan(string, startIndex, endIndex, 1)[0];
+}
+
+
+exports.CodeRegex.prototype.findMatchesInSpan = function(string, startIndex, endIndex, matchCountLimit) {
+	var THIS = this;
+
+	startIndex = startIndex || 0;
+	endIndex = endIndex || string.length;
+
+	var matches = [];
+	var matchLimitHit = false;
+	for(var i = startIndex; i < endIndex && matchLimitHit == false; i++) {
+
+		if(THIS.regex.nulledChars) {
+			var skipChars = THIS.regex.nulledChars.matchesAt(stringToMatch, i);
+			if(skipChars && skipChars.length)
+				i += skipChars.length;
+		}
+
+		else {
+			var result = THIS.matchesAtWithin(string, i, endIndex);
+			if(result) {
+				matches.push(result);
+				matchLimitHit = matchCountLimit !== undefined && matches.length < matchCountLimit;
+			}
+		}
+	}
+	return matches;
+}
+
+
+
+
+
+
+
 
 
 
@@ -75,8 +129,9 @@ var Quality = function(regex, index, capturingGroups) {
 			
 		}
 		else {
+			THIS.capturingGroups.push(regex.numCapturingGroups);
+			THIS.groupNum = regex.numCapturingGroups;
 			regex.numCapturingGroups++;
-			THIS.capturingGroups.push(regex.numCapturingGroups)
 		}
 		
 	}
@@ -85,31 +140,53 @@ var Quality = function(regex, index, capturingGroups) {
 		var command = source.charAt(index);
 		if(command == "\\") {
 			index++;
-			command += source.charAt(index);
+			command = source.charAt(index);
 
 			var isInverse = false;
 
 			if(inSquareBrackets)
 				current.match.push(command.charAt(1));
 
-			else if(command == "\\b" || (isInverse = command == "\\B")) 
+			else if(command == "b" || (isInverse = command == "B")) 
 				current.afterWordEnd = !isInverse
 
 			else {
-				current = new Quality(THIS.regex);
+				current = new Quality(THIS.regex, undefined, THIS.capturingGroups.slice());
 				qualities.push(current);
 
-				if(command == "\\d" || (isInverse = command == "\\D"))
+				if(command == "d" || (isInverse = command == "D"))
 					current.match = ["09"]
 
-				else if(command == "\\w" || (isInverse = command == "\\W"))
+				else if(command == "w" || (isInverse = command == "W"))
 					current.match = ["09", "az", "AZ", "_"]
 
-				else if(command == "\\s" || (isInverse = command == "\\S"))
+				else if(command == "s" || (isInverse = command == "S"))
 					current.match = ["\t", " ", "\n"]
 
+				else if(command >= 0 && command <= 9) {
+					var groupNum = command;
+					index++;
+					for(; index < source.length; index++) {
+						var char = source.charAt(index);
+						if(char >= 0 && char <= 9) 
+							groupNum += ''+char
+						else {
+							break;
+						}
+					}
+					index--;
+
+					groupNum = parseInt(groupNum);
+					if(groupNum > THIS.regex.numCapturingGroups)
+						console.error("can't back reference a group that happens after")
+					else if(current.capturingGroups.indeOf(groupNum) != -1)
+						console.error("can't back reference an encompassing group")
+					else
+						current.backReference = groupNum;
+				}
+
 				else
-					current.match = command.charAt(1);
+					current.match = command;
 
 				current.isInverse = isInverse;
 			}
@@ -191,7 +268,7 @@ var Quality = function(regex, index, capturingGroups) {
 			listComplete = true;
 
 		else {
-			current = new Quality(THIS.regex);
+			current = new Quality(THIS.regex, undefined, THIS.capturingGroups.slice());
 			qualities.push(current);
 
 			if(command == "[") {
@@ -304,7 +381,8 @@ var getNextQualityAndArgs = function(quality, args) {
 			quality: quality.next, 
 			args : {
 				matchCount: 0,
-				callbackStack : args.callbackStack
+				callbackStack : args.callbackStack,
+				captureGroups : args.captureGroups
 			},
 		}
 	}
@@ -316,7 +394,8 @@ var getNextQualityAndArgs = function(quality, args) {
 				quality: callback.quality, 
 				args : {
 					matchCount: callback.matchCount,
-					callbackStack: args.callbackStack.slice(0, -1)
+					callbackStack: args.callbackStack.slice(0, -1),
+					captureGroups : args.captureGroups
 				},
 			}
 		}
@@ -330,7 +409,8 @@ var getRepeatedQualityAndArgs = function(quality, args) {
 			quality: quality,
 			args: {
 				matchCount: args.matchCount + 1,
-				callbackStack: args.callbackStack
+				callbackStack: args.callbackStack,
+				captureGroups : args.captureGroups
 			}
 		}
 	}
@@ -345,7 +425,8 @@ var getRepeatedQualityAndArgs = function(quality, args) {
 		var nextCheck = {
 			args: {
 				matchCount: 0,
-				callbackStack: nextStack
+				callbackStack: nextStack,
+				captureGroups : args.captureGroups
 			}
 		}
 
@@ -370,10 +451,8 @@ Quality.prototype.trySkippingAtWithin = function(stringToMatch, indexToCheck, li
 	if(canBeSkipped) {
 		var nextCheck = getNextQualityAndArgs(THIS, args);
 	
-		if(nextCheck == undefined) {
-			// console.log("end")
+		if(nextCheck == undefined)
 			return "";
-		}
 
 		var result = nextCheck.quality.execAtWithin(stringToMatch, indexToCheck, limitingIndex, nextCheck.args);
 		return result;
@@ -393,8 +472,18 @@ Quality.prototype.tryMatchingAtWithin = function(stringToMatch, indexToCheck, li
 	if(canBeRepeated && !antiMatch){
 		var nextCheck = getRepeatedQualityAndArgs(THIS, args);
 
-		if(antiMatch === false)
+		//if adding characters, try pushing them to the capture group stacks
+		if(antiMatch === false) {
 			indexToCheck++;
+			for(var g = 0; g < THIS.capturingGroups.length; g++) {
+				var groupNum = THIS.capturingGroups[g];
+				if(args.captureGroups[groupNum] == undefined)
+					args.captureGroups[groupNum] = [];
+
+				if(typeof args.captureGroups[groupNum] != "string")
+					args.captureGroups[groupNum].push(char);
+			}
+		}
 
 		for(var loopCount = 0; 
 		loopCount == 0 || (nextCheck.qualities && loopCount < nextCheck.qualities.length);
@@ -405,16 +494,19 @@ Quality.prototype.tryMatchingAtWithin = function(stringToMatch, indexToCheck, li
 			else quality = nextCheck.quality;
 
 			if(quality == undefined)
-				return undefined;
+				break;
 
 			var result = quality.execAtWithin(stringToMatch, indexToCheck, limitingIndex, nextCheck.args);
-	
-			if(result !== undefined) {
-				if(antiMatch === false) {
-					// console.log(char+result);
-					return char + result;
-				}
-				return result;
+			if(result !== undefined) 
+				return antiMatch === false ? char + result : result;
+		}
+
+		//if added characters, remove them from capture group stacks
+		if(antiMatch === false) {
+			for(var g = 0; g < THIS.capturingGroups.length; g++) {
+				var groupNum = THIS.capturingGroups[g];
+				if(typeof args.captureGroups[groupNum] != "string")
+					args.captureGroups[groupNum].pop();
 			}
 		}
 	}
@@ -441,27 +533,66 @@ Quality.prototype.execAtWithin = function(stringToMatch, indexToCheck, limitingI
 	}
 
 	// console.log("exec ", this.toString(), "at", stringToMatch.substr(indexToCheck, 8));
+	var isRoot = args === undefined;
+	if(isRoot) {
+		args = {
+			matchCount: 0,
+			callbackStack: []
+		}
+		if(THIS.regex.numCapturingGroups > 0)
+			args.captureGroups = [];
+	}
+	
 
-	args = args || {
-		matchCount: 0,
-		callbackStack: []
+
+	//if a capture group is complete, hold the old stack that was building it and
+	//turn it into a string to solidify it.
+	var oldCaptureStack;
+	if(args.matchCount == 1 
+	&& THIS.groupNum !== undefined 
+	&& typeof args.captureGroups[THIS.groupNum] != "string") {
+		oldCaptureStack = args.captureGroups[THIS.groupNum];
+		// console.log(oldCaptureStack, THIS, args);
+		console.log(oldCaptureStack, args);
+		args.captureGroups[THIS.groupNum] = oldCaptureStack.join('');
 	}
 
+	var result;
 	if(THIS.matchFewer) {
-		var result = THIS.trySkippingAtWithin(stringToMatch, indexToCheck, limitingIndex, args);
-		if(result !== undefined)
-			return result;
-		return THIS.tryMatchingAtWithin(stringToMatch, indexToCheck, limitingIndex, args);
+		result = THIS.trySkippingAtWithin(stringToMatch, indexToCheck, limitingIndex, args);
+		if(result === undefined)
+			result = THIS.tryMatchingAtWithin(stringToMatch, indexToCheck, limitingIndex, args);
 	}
 	//in match more, try matching first, try skipping second
 	else {
-		var result = THIS.tryMatchingAtWithin(stringToMatch, indexToCheck, limitingIndex, args);
-		if(result !== undefined)
-			return result;
-		return THIS.trySkippingAtWithin(stringToMatch, indexToCheck, limitingIndex, args);
+		result = THIS.tryMatchingAtWithin(stringToMatch, indexToCheck, limitingIndex, args);
+		if(result === undefined)
+			result = THIS.trySkippingAtWithin(stringToMatch, indexToCheck, limitingIndex, args);
 	}
 
-	return undefined;
+	if(result !== undefined) {
+		if(isRoot == false)
+			return result; 
+
+		else {
+			var out = {
+				match: result,
+				index: indexToCheck,
+			}
+			if(args.captureGroups)
+				out.groups = args.captureGroups;
+
+			return out;
+		}
+		
+	}
+	else {
+		//if this quality failed to match and move on, desolidify/revert the captureStack
+		if(oldCaptureStack !== undefined)
+			args.captureGroups[THIS.groupNum] = oldCaptureStack;
+
+		return undefined;
+	}	
 }
 
 
@@ -538,7 +669,7 @@ var COMMENT_BlOCK = new exports.CodeRegex("/\/*.*\/*/");
 
 if(process.argv[1] == __filename) {
 	var TESTS = [
-		["(a|b(c|d)?)+", "bc/*zzzz*/abdabaneanbbadadbadnbaetnbdbteadbanbdanb"]
+		["(a|b(c|d)?)+", "bcabdabaneanbbadadbadnbaetnbdbteadbanbdanb"]
 	]
 
 
@@ -579,6 +710,8 @@ if(process.argv[1] == __filename) {
 	}
 
 	else {
+		console.log(COMMENT_BlOCK, COMMENT_BlOCK.matchesAt);
+
 		var regex = new exports.CodeRegex(testVals[0], COMMENT_BlOCK);
 		console.log("searching", stringToSearch, 'for', regex.source)
 		console.log(regex.matchesStart(stringToSearch))

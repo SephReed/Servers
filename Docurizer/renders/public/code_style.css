@@ -90,8 +90,19 @@ body {
 		color: #ab82ff;
 	}
 
-	keyComp {
-		color: #f07;
+	statement {
+		border: 1px solid transparent;
+		border-width: 0px 1px;
+	}
+
+		statement:hover {
+			border-color: rgba(128,128,128, 0.3);
+			background-color: rgba(128,128,128, 0.1);
+		}
+
+	/*magenta*/
+	keyComp, operator, conditionType {
+		color: #f07;		
 	}
 		string, include {
 			color: #f4e161;
@@ -110,7 +121,7 @@ body {
 			color: #d8c963;
 		}
 
-	keyVar, fnName, typeDef {
+	keyVar, command fnCall > fnName, typeDef {
 		color: #77d9f1;
 	}
 
@@ -118,6 +129,6 @@ body {
 		color: #5df;
 	}
 
-		classNameDef, inheritance, fnDefHeader fnName, classfnprivacyblock fnName {
+		classNameDef, inheritance, fnDef fnName, classfnprivacyblock fnName {
 			color: #c3ff00;
 		}

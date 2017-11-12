@@ -28,6 +28,7 @@ someReturnType32 CLASSY:doThing(type1 arg1, int arg2) {
 
 
 
+
 // Prints out some details on a Polygon.
 // Note that it's not passing through a particular Polygon (like Triangle or Rectangle), rather it's the parent.
 void printDetails(Polygon* shape) {
@@ -68,8 +69,16 @@ int main() {
 
 
 	if(lalal) {
-		//go to here
+		if(doda) {
 
+		}
+		else if(lnea) {
+
+		}
+
+	}
+	else {
+		la
 	}
 
 

@@ -22,7 +22,7 @@ const cppParser = new Scoperizer.RuleSet(cppScopes);
 const Permeate = require('./libs/Scoperizer/Permeate.js');
 
 
-// DOCZ.limitFileCount = 20;
+DOCZ.limitFileCount = 1;
 DOCZ.filesFound = 0;
 
 
@@ -43,7 +43,7 @@ DOCZ.registerFile = function(file) {
 cppParser.getScope("include").on("complete", function(scopeChunk) {
 	var chunk = scopeChunk.getFirstSub(">string");
 	if(chunk) {
-		var include = chunk.file.rawText.substring(chunk.startIndex+1, chunk.endIndex);
+		var include = chunk.getRawText().replace(/"/g, '');
 		chunk.file.addInclude(include);
 		scopeChunk.includePath = include;
 	}
@@ -405,7 +405,7 @@ DOCZ.class.File = function(filePath) {
 	THIS.includes = [];
 	// THIS.includePaths = [];
 	THIS.rawText;
-	THIS.allRegexs = {};
+	// THIS.allRegexs = {};
 
 	if(THIS.extension == "h" || THIS.extension == "hpp") {
 		var cppPath, cPath;

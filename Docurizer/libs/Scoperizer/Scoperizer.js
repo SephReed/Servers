@@ -15,15 +15,6 @@ const Permeate = require("./Permeate.js");
 
 
 
-var HAPI;
-
-
-
-exports.setScopesDef = function(scopesDef) {
-	HAPI = scopesDef;
-}
-
-
 exports.txtListToRegExpString = function(filePath) {
 	console.log();
 
@@ -40,378 +31,6 @@ exports.txtListToRegExpString = function(filePath) {
 	});
 }
 
-
-
-
-
-
-
-
-
-
-/******************************************
-*
-*		Main Parser
-*
-*****************************************/
-exports.RuleSet = function(scopeDefs) {
-	var THIS = this;
-	THIS.scopes = {};
-	THIS.scopes.all = [];
-	THIS.scopes.byID = {};
-
-	scopeDefs.list.forEach(function(scopeDef, index) {
-
-		scopeDef.priority = scopeDefs.list.length - index;
-		scopeDef.startID = 2*index;
-		scopeDef.endID = scopeDef.startID + 1;
-		var scope = new exports.Scope(scopeDef);
-
-		if(scopeDef == scopeDefs.root)
-			THIS.rootScope = scope
-
-		THIS.scopes.all.push(scope);
-		THIS.scopes.byID[scope.name] = scope;
-	})
-
-	THIS.computeSubScopes();
-}
-
-exports.RuleSet.prototype.getScope = function(scopeName) {
-	return this.scopes.byID[scopeName];
-}
-
-exports.RuleSet.prototype.computeSubScopes = function(scope, branchStack) {
-	var THIS = this;
-	branchStack = branchStack || [];
-	scope = scope || THIS.rootScope;
-	var out = [];
-
-	branchStack.push(scope);
-
-
-	if(scope.allowedSubScopes) {
-		scope.subScopes = scope.allowedSubScopes
-		.map((subScopeName) => {
-			var addMe = THIS.scopes.byID[subScopeName];
-			if(addMe == undefined)
-				console.error("bad name for sub scope:", subScopeName);
-			return addMe;
-		}).filter((subScope) => {
-			return subScope != undefined;
-		})
-
-		scope.subScopes.forEach((item) => {out.push(item.name)});
-
-
-		scope.subScopes.filter((subScope) => {
-			return branchStack.indexOf(subScope) == -1;
-		}).map(function(subScope){
-			// console.log(subScope);
-			return THIS.computeSubScopes(subScope, branchStack);
-		}).forEach(function(subScopePotentials){
-			// console.log(subScopePotentials);
-			subScopePotentials
-			.filter(function(potential){
-				return out.indexOf(potential) == -1;
-			}).forEach((subScopeName) => {
-				out.push(subScopeName);
-			});
-		});
-	}
-
-	branchStack.pop();
-	scope.potentialSubScopes = out;
-	return out;
-}
-
-
-
-
-//TODO: create special case for when non-inclusive starts end on or after charStart
-//TODO: progress regexs which don't fall into a scope to after the scope
-//TODO: get rid of match IDs, just pass on recent regex matches
-//continue to record matches by start position
-//find a way to make regexs not search passed a known start position
-//TODO: create an attribute for scopes which can interfere with the current ones end
-
-//use depthMode for cases where read through / skip is effecient
-exports.RuleSet.prototype.scopify = function(file, scopeInfo) {
-	if(file.allRegexs == undefined)
-		file.allRegexs = [];
-
-	var THIS = this;
-
-	scopeInfo = scopeInfo || {
-		startIndex: 0,
-		endIndex: file.rawText.length-1,
-		scope: THIS.rootScope,
-	}
-
-	//variable to be returned at end
-	var scopeChunk = new exports.ScopeChunk(file, scopeInfo);
-	if(scopeInfo.parentChunk)
-		scopeInfo.parentChunk.appendSubChunk(scopeChunk);
-	
-	//allRegexs variable keeps track of shared info for file
-	//regarding the locations of all matching scope starts and ends
-	var allRegexs = file.allRegexs;
-
-	var thisScope = scopeChunk.scope;
-
-
-	// if(thisScope.name == "block") {
-	// 	console.log("BLOCK", file.rawText.substr(scopeChunk.startIndex, 14));
-	// 	console.log(thisScope.subScopes);
-	// }
-
-	//special case for matches that contain no sub space (ie. keywords, end after the match start)
-	var startMatch = scopeChunk.startMatch;
-	if(startMatch && thisScope.end == undefined) {
-		// var text = pointMatch.text;
-		// scopeChunk.html = "<"+thisScope.name+">"+text+"</"+thisScope.name+">";
-		scopeChunk.endIndex = startMatch.index + startMatch.text.length - 1;
-		scopeChunk.complete();
-		return scopeChunk;
-	}
-
-
-	var rawText = file.rawText,
-		startMatchPointIDs = scopeChunk.startMatchPointIDs,
-		endMatchPointIDs = scopeChunk.endMatchPointIDs,
-		charStart = scopeChunk.startIndex,
-		subScopes = thisScope.subScopes;
-
-
-
-	var addLooseText = function(endIndex){
-		if(charStart <= endIndex) {
-			var looseTextChunk = new exports.ScopeChunk(file, {
-				parentChunk: scopeChunk,
-				scope: exports.LOOSE_TEXT_SCOPE,
-				startIndex: charStart,
-				endIndex: endIndex
-			});
-			scopeChunk.appendSubChunk(looseTextChunk);
-			charStart = endIndex+1;
-		}
-	}
-
-	var progressMatchPointID = function(name, matchPointIDs, regex, targetIndex, indexIsEnd) {
-		if(targetIndex === undefined)
-			targetIndex = charStart;
-
-		//first asserts that all matches up to some index have been found
-		//then iterates forward searching for a match beyond the current targetIndex
-
-		var stopLoop;
-		while(stopLoop !== true) {
-			var matchID = matchPointIDs[name] || 0;
-
-			while(matchID > regex.matchPoints.length-1) {
-				if(regex.complete !== true) {
-					var matches = regex.exec(rawText);
-					
-					if(matches == null){
-						regex.complete = true;
-						
-					}
-
-					else {
-						regex.matchPoints.push({
-							text: matches[0],
-							index: matches.index
-						});
-					}
-				}
-				else matchID = -1;
-			}
-
-			var noMatchesLeft = matchID == -1,
-				indexReachableFromTarget = false;
-
-			if(noMatchesLeft == false) {
-				var match = regex.matchPoints[matchID];
-				var index = indexIsEnd == true ? match.index + match.text.length-1 : match.index;
-				indexReachableFromTarget = index >= targetIndex;
-
-				// if(indexIsEnd && thisScope.name == "fnDef") {
-				// 	console.log(rawText.substr(targetIndex, 24));
-				// 	console.log(targetIndex, match, indexReachableFromTarget);
-				// }
-			}
-
-			stopLoop = noMatchesLeft || indexReachableFromTarget;
-
-			matchPointIDs[name] = matchID;
-			if(stopLoop == false)
-				matchPointIDs[name]++;
-		}
-	}
-
-
-	//if this scope is not root (terminates at end of file), make sure its potential end position is known
-	//pontential end of scope will be moved if a subscope contains it
-	//ie. bracket in bracket {{ match on loop 1-->} match on loop 2-->}
-	var progressEndMatchPointID = function(soonestIndex, indexIsEnd) {
-		if(thisScope != THIS.rootScope){ 
-			var regex = allRegexs[thisScope.endID];
-			
-			progressMatchPointID(thisScope.name, endMatchPointIDs, regex, soonestIndex, indexIsEnd);
-			var endPointID = endMatchPointIDs[thisScope.name];
-			var endMatch = regex.matchPoints[endPointID];
-			if(endMatch == undefined) {
-				console.error();
-				console.error("ERROR: no end match for <"+thisScope.name+">")
-				console.error(scopeChunk.file.path+":"+scopeChunk.startIndex)
-				console.error(`"`+rawText.substr(scopeChunk.startIndex, 15)+`"`);
-				console.error("recovering with soonestIndex");
-				endMatch = {
-					text: "FAIL",
-					index: soonestIndex
-				}
-			}
-			scopeChunk.setCurrentEndMatch(endMatch);
-		}
-	}
-
-	
-
-	
-
-
-	//while there are subscopes left to branch into..
-	var subScopesLeft = true;
-	while(subScopesLeft) {
-		
-		//soonest ends is defined above, and modified below to always include
-		//potential endings after adding a subscope
-		//if this was a start match only scope, it would have returned already
-		//end must be at least one char after start
-		var soonestEnd = Math.max(charStart, scopeChunk.startIndex+1);	
-		progressEndMatchPointID(soonestEnd);
-
-
-		//for every subscope, make sure that the current id for next match
-		//is after the current charStart.
-		for(var i in subScopes) {
-			var scope = subScopes[i];
-			progressMatchPointID(scope.name, startMatchPointIDs, allRegexs[scope.startID], charStart);
-		}
-
-		//compare all upcoming scopes, find the soonest one to start
-		let soonestScope;
-		let soonestScopeIndex = -42;
-		let soonestScopeMatchID;
-		let soonestMatch;
-
-		for(var i in subScopes) {
-			var subScope = subScopes[i];
-			
-			var regex = allRegexs[subScope.startID];
-			var name = subScope.name;
-			var matchNum = startMatchPointIDs[name];
-			var match = regex.matchPoints[matchNum];
-			
-
-			if(match != undefined) {
-				var scopeIndex = match.index;
-				if(subScope.startInclusive == false)
-					scopeIndex += match.text.length;
-
-
-				if(soonestScope == undefined || scopeIndex < soonestScopeIndex
-				|| (scopeIndex == soonestScopeIndex && subScope.priority > soonestScope.priority)){
-					soonestScope = subScope;
-					soonestScopeIndex = scopeIndex;
-					soonestScopeMatchID = matchNum;
-					soonestMatch = regex.matchPoints[matchNum];
-				}
-			}
-		}
-
-		
-		//if no subscopes exist, 
-		//or the soonest ones nearest end ends after the end of this scope,
-		//or the soonest one start must end after the end of this scope
-		//end the search
-		if(soonestScope == undefined
-	 	|| (soonestScope.end && scopeChunk.endIndex <= soonestScopeIndex)
-	 	|| (soonestScope.end == undefined && scopeChunk.endIndex < soonestScopeIndex + soonestMatch.text.length - 1)) {
-			subScopesLeft = false;
-		}
-
-		//otherwise, create a class with the important information for the next scope function
-		//includes the scope type, the start index, and the ids of matches it may have
-		//match ids are based off of a list of all things matching a regexp in order
-		else {
-			startMatchPointIDs[soonestScope.name]++;
-
-			var nextScopeInfo = {
-				parentChunk: scopeChunk,
-				scope: soonestScope,
-				matchID: soonestScopeMatchID,
-				startMatchPointIDs: {},
-				endMatchPointIDs: {}
-			}
-
-			subScopes.forEach(function(subScope){
-				nextScopeInfo.startMatchPointIDs[subScope.name] = startMatchPointIDs[subScope.name];
-				nextScopeInfo.endMatchPointIDs[subScope.name] = endMatchPointIDs[subScope.name];
-			});
-
-			//make sure to add any loose text (no scope)
-			//then use the outcome to find where the scope starts again next cycle
-			// if(soonestScopeIndex == charStart)
-				
-			addLooseText(soonestScopeIndex-1);
-			var outcome = THIS.scopify(file, nextScopeInfo);
-
-			// scopeChunk.subChunks.push(outcome);
-
-			// if(thisScope.name == "block")
-			// 	console.log(soonestScope.name, thisScope.name)
-
-			if(soonestScope != thisScope)
-				progressEndMatchPointID(outcome.endIndex, true);
-			else
-				progressEndMatchPointID(outcome.endMatch.index + outcome.endMatch.text.length);
-			
-			//)};
-			//for cases where an end match encompases other end matches
-			if(scopeChunk.endMatch && scopeChunk.endIndex >= outcome.endIndex && scopeChunk.endMatch.index <= outcome.endIndex) {
-				//even more special cases where a scope encompasses itself (blocks usually)
-				//makes sure no two nested blocks share the same end point
-				var notSharingEndWithSelf = true;
-				for(var ptr = outcome; notSharingEndWithSelf && ptr != undefined; ptr = ptr.lastSubChunk){
-					if(ptr.scope == thisScope && ptr.endIndex >= scopeChunk.endMatch.index)
-						notSharingEndWithSelf = false;
-				}
-				
-				subScopesLeft = !notSharingEndWithSelf;
-			}
-				
-				// charStart = scopeChunk.endMatch.index;
-			
-			charStart = outcome.endIndex+1;
-
-			for(name in outcome.endMatchPointUpdates)
-				endMatchPointIDs[name] = outcome.endMatchPointUpdates[name];
-
-			for(name in outcome.startMatchPointUpdates)
-				startMatchPointIDs[name] = outcome.startMatchPointUpdates[name];
-		}
-	}
-
-	if(charStart > scopeChunk.startIndex)
-		addLooseText(scopeChunk.endIndex);
-	
-
-	scopeChunk.startMatchPointUpdates = startMatchPointIDs;
-	scopeChunk.endMatchPointUpdates = endMatchPointIDs;
-	scopeChunk.complete();
-	return scopeChunk;
-}
 
 
 
@@ -488,6 +107,210 @@ exports.Scope.prototype.removeEventListener = function(eventName, fn) {
 
 
 
+/******************************************
+*
+*		Rule Set (for each language)
+*
+*****************************************/
+exports.RuleSet = function(scopeDefs) {
+	var THIS = this;
+	THIS.name = scopeDefs.name;
+	THIS.anywhereScopes = scopeDefs.anywhereScopes;
+	THIS.scopes = {};
+	THIS.scopes.all = [];
+	THIS.scopes.byID = {};
+
+	scopeDefs.list.forEach(function(scopeDef, index) {
+
+		scopeDef.priority = scopeDefs.list.length - index;
+		scopeDef.startID = 2*index;
+		scopeDef.endID = scopeDef.startID + 1;
+		scopeDef.capturingGroupCount = 0;
+
+		if(scopeDef.start) {
+			var regexText = scopeDef.start.source ? scopeDef.start.source : scopeDef.start;
+			var subGroupCount = 0;
+			for(var i = 0; i < regexText.length; i++) {
+				var char = regexText.charAt(i);
+				if(char == "\\") 
+					i++;
+
+				else if(char == "(" && regexText.charAt(i+1) != "?")
+					subGroupCount++;
+			}
+
+			scopeDef.capturingGroupCount = subGroupCount;
+			if(subGroupCount > 0 
+			&& (scopeDef.capturedScopesNames === undefined || scopeDef.capturedScopesNames.length != subGroupCount))
+				console.error("Scope Definition has capturing groups, but no scope defined for each", scopeDef, " if you want not capturing groups, look those up.");
+		}
+
+		
+
+		var scope = new exports.Scope(scopeDef);
+
+		if(scopeDef == scopeDefs.root)
+			THIS.rootScope = scope
+
+		THIS.scopes.all.push(scope);
+		THIS.scopes.byID[scope.name] = scope;
+	})
+
+	THIS.scopes.all.forEach((scope) => {
+		if(scope.allowedSubScopes) {
+			scope.subScopes = scope.allowedSubScopes
+			.map((subScopeName) => {
+				var addMe = THIS.scopes.byID[subScopeName];
+				if(addMe == undefined)
+					console.error("bad name for sub scope:", subScopeName);
+				return addMe;
+			}).filter((subScope) => {
+				return subScope != undefined;
+			}).sort((a, b)=> {
+				return a.priority > b.priority ? -1 : 1;
+			})
+		}
+	})
+
+	// THIS.computeSubScopes();
+	THIS.computeCaptureScopes();
+}
+
+exports.RuleSet.prototype.getScope = function(scopeName) {
+	return this.scopes.byID[scopeName];
+}
+
+exports.RuleSet.prototype.computeCaptureScopes = function() {
+	var THIS = this;
+	THIS.scopes.all.forEach((scope) => {
+		if(scope.capturedScopesNames) {
+			scope.capturedScopes = [];
+			scope.capturedScopesNames.forEach((captureName) => {
+				var target = THIS.scopes.byID[captureName];
+				scope.capturedScopes.push(target);
+
+				if(target === undefined)
+					console.error("ERROR: bad name for captured scope", captureName, "in", scope.name)
+			})
+		}
+
+
+		
+		
+		if(scope.end || (scope.subScopes && scope.subScopes.length)) {
+			var subsRegexString = "";
+			var groupNumOffset = 1;
+
+			scope.nextMatchGroupNums = {};
+			if(scope.end && scope.end != -1) {
+				subsRegexString += `(`+(scope.end.source ? scope.end.source : scope.end) +`)`;
+				scope.nextMatchGroupNums[groupNumOffset] = -1;
+				groupNumOffset++;
+			}
+
+			if(scope.subScopes) {
+				scope.subScopes.forEach((sub)=> {
+					if(subsRegexString.length)
+						subsRegexString += '|'
+
+					var source = (sub.start.source ? sub.start.source : sub.start);
+					source = source.replace(/\\(\d+)/g, (replaceMe, groupNum) => {
+						groupNum = parseInt(groupNum) + groupNumOffset;
+						console.log("REPLACE", replaceMe);
+						return "\\"+groupNum;
+					})
+
+					subsRegexString += `(`+ source + `)`;
+					scope.nextMatchGroupNums[groupNumOffset] = sub;
+					groupNumOffset += sub.capturingGroupCount + 1;
+				});
+			}
+
+			if(scope.end == -1) {
+				if(subsRegexString.length)
+					subsRegexString += '|';
+				subsRegexString += `([\\S\\s])`;
+				scope.nextMatchGroupNums[groupNumOffset] = -1;
+			}
+
+			if(subsRegexString.length)
+				scope.nextMatchRegex = new RegExp(subsRegexString, 'g');
+		}
+
+		// console.log(scope);
+		
+	})
+}
+
+
+
+
+exports.RuleSet.prototype.removeBreakingScopes = function(file) {
+	var THIS = this;
+	file.rawCode = file.rawText;
+	if(THIS.anywhereScopes) {
+		THIS.anywhereScopes.forEach((scope) => {
+			file.rawCode = file.rawCode.replace(new RegExp(scope.start, 'g'), (text, index) => {
+				return '';
+			});
+		});
+	}
+}
+
+
+
+
+//TODO: create special case for when non-inclusive starts end on or after charStart
+//TODO: progress regexs which don't fall into a scope to after the scope
+//TODO: get rid of match IDs, just pass on recent regex matches
+//continue to record matches by start position
+//find a way to make regexs not search passed a known start position
+//TODO: create an attribute for scopes which can interfere with the current ones end
+
+//use depthMode for cases where read through / skip is effecient
+exports.RuleSet.prototype.scopify = function(file) {
+	var THIS = this;
+
+	if(file.rawCode === undefined)
+		THIS.removeBreakingScopes(file);
+
+	var out = new exports.ScopeChunk(file, {
+		startIndex: 0,
+		endIndex: file.rawCode.length-1,
+		scope: THIS.rootScope,
+	});
+	out.scopify();
+	return out;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*********************************************
 *
 *				Scope Chunk
@@ -499,7 +322,10 @@ exports.Scope.prototype.removeEventListener = function(eventName, fn) {
 exports.ScopeChunk = function(file, scopeInfo) {
 	var THIS = this;
 
+	THIS.scopeInfo = scopeInfo;
+
 	THIS.subChunks = [];
+	THIS.glazedChunks = [];
 	THIS.subChunksByName = {};
 	THIS.lastSubChunk;
 	THIS.parentChunk;
@@ -511,25 +337,14 @@ exports.ScopeChunk = function(file, scopeInfo) {
 	if(file == "TEST_MODE")
 		return;
 
-	// THIS.scope = scopeInfo ? scopeInfo.scope : HAPI.scopes.root;
 	THIS.scope = scopeInfo.scope;
 
-	//init allRegexs to contain any subscopes that are to be searched for
-	//as well as the end regex for this scope
-	var allRegexs = THIS.file.allRegexs;
-	for(var i in THIS.scope.subScopes) {
-		var startID = THIS.scope.subScopes[i].startID;
-		if(allRegexs[startID] == undefined) {
-			allRegexs[startID] = new RegExp(THIS.scope.subScopes[i].start, 'g');
-			allRegexs[startID].matchPoints = [];
-		}
-	}
 
-
-	if(scopeInfo.matchID !== undefined) {
-		THIS.startMatch = allRegexs[THIS.scope.startID].matchPoints[scopeInfo.matchID];
+	if(scopeInfo.startMatch !== undefined) {	
+		THIS.startMatch = scopeInfo.startMatch;
 		THIS.startIndex = THIS.startMatch.index;
-		if(THIS.scope.startInclusive == false)
+
+		if(THIS.scope.startInclusive != true)
 			THIS.startIndex += THIS.startMatch.text.length;
 	}
 	else if(scopeInfo.startIndex !== undefined)
@@ -543,21 +358,211 @@ exports.ScopeChunk = function(file, scopeInfo) {
 	if(scopeInfo.endIndex !== undefined) 
 		THIS.endIndex = scopeInfo.endIndex;
 
-	else {
-		THIS.endIndex = -1;
+	else if(THIS.startMatch && THIS.scope.end == undefined) {
+		THIS.endIndex = THIS.startMatch.index + THIS.startMatch.text.length - 1;
+	}
+}
 
-		//ensure that regex for end is initialized
-		var endID = THIS.scope.endID;
-		if(allRegexs[endID] == undefined) {
-			allRegexs[endID] = new RegExp(THIS.scope.end, 'g');
-			allRegexs[endID].matchPoints = [];
+
+exports.ScopeChunk.prototype.getCharLimit = function() {
+	if(this.endIndex !== undefined)
+		return this.endIndex;
+
+	if(this.parentChunk !== undefined) 
+		return this.parentChunk.getCharLimit();
+}
+
+
+
+
+
+
+
+
+
+
+/******************************************
+*
+*		ScopeChunk - scopify!!!!
+*
+*****************************************/
+
+
+exports.ScopeChunk.prototype.scopify = function(fastMode, depth) {
+	var THIS = this;
+
+
+
+	let scope = THIS.scope,
+		rawCode = THIS.file.rawCode,
+		indexOffset = THIS.startIndex,
+		subScopes = THIS.subScopes,
+		nextMatchRegex = THIS.scope.nextMatchRegex;
+
+	console.log(scope.name, THIS.endIndex, THIS.startMatch, scope.end);
+
+
+	var searchableCode = THIS.file.rawCode.substring(indexOffset, THIS.getCharLimit()+1);
+	var charStart = 0;
+
+
+	var addLooseText = function(endIndex){
+		if(charStart <= endIndex) {
+			THIS.spawnSubChunk({
+				scope: exports.LOOSE_TEXT_SCOPE,
+				startIndex: indexOffset+charStart,
+				endIndex: indexOffset+endIndex
+			});
+			charStart = endIndex+1;
 		}
 	}
 
-	THIS.startMatchPointIDs = scopeInfo.startMatchPointIDs || {};
-	THIS.endMatchPointIDs = scopeInfo.endMatchPointIDs || {};
+
+	var matchCaptures = THIS.scopeInfo.matchCaptures;
+	if(scope.capturedScopes != undefined && matchCaptures == undefined && scope.start) {
+		if(THIS.startRegex == undefined)
+			THIS.startRegex = new RegExp(scope.start, 'g');
+
+		THIS.startRegex.lastIndex = 0;
+		var regexMatch = THIS.startRegex.exec(searchableCode);
+
+		if(regexMatch) {
+			matchCaptures = [];
+			for(var m = 1; m < regexMatch.length; m++) 
+				matchCaptures.push(regexMatch[m]);
+		}
+	}
+
+
+	if(matchCaptures && scope.capturedScopes != undefined) {
+
+		console.log(matchCaptures);
+			//
+		for(var m = 0; m < matchCaptures.length; m++) {
+			var capture = matchCaptures[m];
+
+			console.log(matchCaptures, scope.name);
+			var captureScope = scope.capturedScopes[m];
+
+			if(captureScope != undefined) {
+				// console.log(searchableCode.slice(charStart), capture);
+
+				var nextIndex = searchableCode.slice(charStart).indexOf(capture)
+				if(nextIndex == -1)
+					console.error("Could not find")
+				nextIndex += charStart;
+
+				var nextScopeInfo = {
+					scope: captureScope,
+					startMatch: {
+						text: capture,
+						index: indexOffset + nextIndex 
+					}
+				}
+					
+				addLooseText(nextIndex-1);
+
+				console.log(nextScopeInfo);
+				var outcome = THIS.spawnSubChunk(nextScopeInfo);
+				outcome.scopify();
+				charStart = (outcome.endIndex - indexOffset) +1;	
+			}			
+		}
+	}
+
+	console.log(scope.name, scope.subScopes);
+
+
+	//while there are subscopes left to branch into..
+	var subScopesLeft = (nextMatchRegex != undefined);
+	while(subScopesLeft) {
+
+		// console.log(THIS.scope.name, scope.subScopes.length)
+			//
+		nextMatchRegex.lastIndex = charStart;
+		var regexMatch = nextMatchRegex.exec(searchableCode);
+
+		if(regexMatch == undefined) {
+			console.error("ERROR: neither end nor subscopes could be found", searchableCode.substr(charStart, 16));
+
+			subScopesLeft = false;
+		}
+
+		else {
+			var matchNum = undefined;
+			for(var m = 1; matchNum === undefined && m < regexMatch.length; m++) {
+				console.log(m, regexMatch[m])
+				matchNum = regexMatch[m] !== undefined ? m : undefined;
+			}
+			let matchScope = scope.nextMatchGroupNums[matchNum];
+			console.log("match", matchNum, regexMatch, nextMatchRegex.source);
+
+
+			
+			if(matchScope == -1) { // && scope.end) {
+				console.log("IS END")
+				subScopesLeft = false;
+				THIS.endIndex = indexOffset + regexMatch.index;
+			}
+			else {
+				let matchCaptures;
+				for(let sm = 0; sm < matchScope.capturingGroupCount; sm++) {
+					matchCaptures = matchCaptures || [];
+					matchCaptures.push(regexMatch[matchNum+sm+1]);
+				}
+				
+				var nextScopeInfo = {
+					scope: matchScope,
+					startMatch: {
+						text: regexMatch[0],
+						index: regexMatch.index + indexOffset
+					}
+				}
+
+				if(matchCaptures)
+					nextScopeInfo.matchCaptures = matchCaptures;
+
+				var startIndex = regexMatch.index;
+				if(matchScope.startInclusive != true)
+					startIndex += regexMatch[0].length;
+
+					
+				addLooseText(startIndex-1);
+
+				console.log(nextScopeInfo.scope.name)
+
+				var outcome = THIS.spawnSubChunk(nextScopeInfo);
+				outcome.scopify();
+				charStart = (outcome.endIndex - indexOffset) +1;
+				console.log(outcome.endIndex, indexOffset, charStart);
+			}
+		}
+	}
+	
+		
+	
+	if(charStart > 0)
+		addLooseText(THIS.endIndex - indexOffset);
+	
+	if(THIS.glazedChunks.length == 0)
+		THIS.complete();
+
 }
 
+
+
+
+
+
+
+
+
+exports.ScopeChunk.prototype.spawnSubChunk = function(scopeInfo) {
+	var THIS = this;
+	var addMe = new exports.ScopeChunk(THIS.file, scopeInfo);
+	THIS.appendSubChunk(addMe);
+	return addMe;
+}
 
 
 
@@ -588,23 +593,34 @@ exports.ScopeChunk.prototype.appendSubChunk = function(addMe) {
 *********************************/
 
 
-exports.ScopeChunk.prototype.setCurrentEndMatch = function(endMatch) {
-	var THIS = this;
-	THIS.endMatch = endMatch;
-	THIS.endIndex = endMatch.index - 1;
+// exports.ScopeChunk.prototype.setCurrentEndMatch = function(endMatch) {
+// 	var THIS = this;
+// 	THIS.endMatch = endMatch;
+// 	THIS.endIndex = endMatch.index - 1;
 
-	if(THIS.scope.endInclusive)
-		THIS.endIndex += endMatch.text.length;
-}
+// 	if(THIS.scope.endInclusive)
+// 		THIS.endIndex += endMatch.text.length;
+// }
 
 
 
-exports.ScopeChunk.prototype.getRawText = function() {
+exports.ScopeChunk.prototype.getRawTextReal = function() {
 	var THIS = this;
 	if(THIS.rawText == undefined)
 		THIS.rawText = THIS.file.rawText.substring(THIS.startIndex, THIS.endIndex+1);
 
 	return THIS.rawText;
+}
+
+
+
+
+exports.ScopeChunk.prototype.getRawText = function() {
+	var THIS = this;
+	if(THIS.rawCode == undefined)
+		THIS.rawCode = THIS.file.rawCode.substring(THIS.startIndex, THIS.endIndex+1);
+
+	return THIS.rawCode;
 }
 
 
@@ -618,7 +634,7 @@ exports.ScopeChunk.prototype.getRawText = function() {
 exports.ScopeChunk.prototype.dispatchScopeEvent = function(eventName, args) {
 	var THIS = this;
 	if(THIS.scope.eventListeners == undefined)
-		console.log(THIS.scope);
+		return;
 
 	var listeners = THIS.scope.eventListeners[eventName];
 
@@ -637,14 +653,6 @@ exports.ScopeChunk.prototype.complete = function() {
 		THIS.dispatchScopeEvent("complete");
 	}
 }
-
-
-
-
-
-
-
-
 
 
 
