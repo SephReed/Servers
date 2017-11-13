@@ -2,15 +2,27 @@ exports.augment = function(Scoperizer) {
 	Scoperizer.ScopeChunk.prototype.toHtml = function() {
 		return exports.htmlifySpacing(this.permeate( {
 			postSubsFn: function(scopeChunk, childResults, state) {
-				if(scopeChunk.scope == Scoperizer.looseTextScope)
-					return exports.exitHtml(scopeChunk.getRawText());
+				if(scopeChunk.scope == Scoperizer.LOOSE_TEXT_SCOPE)
+					return exports.exitHtml(scopeChunk.getRawCode());
+
+				if(scopeChunk.scope.name == "comment")
+					console.log("comment found");
 
 				var THIS = this;
 				var outStrings = [];
 				var name = scopeChunk.scope.name;
 				outStrings.push("<"+name+">");
-				if(childResults.length == 0) 
-					outStrings.push(exports.exitHtml(scopeChunk.getRawText()));
+				if(childResults.length == 0) {
+					var text;
+					if(scopeChunk.isNonCode != true)
+						text = scopeChunk.getRawCode();
+					else {
+						text = scopeChunk.getRawText();
+						console.log(text);
+					}
+
+					outStrings.push(exports.exitHtml(text));
+				}
 				else 
 					childResults.forEach((result) => {outStrings.push(result)});
 

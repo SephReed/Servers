@@ -1,85 +1,88 @@
-<link href='public/code_style.css' rel='stylesheet' type='text/css'><script type="text/javascript" src="public/file_view.js"></script><file><LooseText><br>
+<link href='public/code_style.css' rel='stylesheet' type='text/css'><script type="text/javascript" src="public/file_view.js"></script><file><comment>// Example Project</comment><br>
+<comment>// Description: Main Program</comment><br>
 <br>
+<include><keyComp>#include</keyComp> &lt;iostream&gt;</include><br>
 <br>
-</LooseText><include><keyComp>#include</keyComp><LooseText> &lt;iostream&gt;<br>
-</LooseText></include><LooseText><br>
-</LooseText><include><keyComp>#include</keyComp><LooseText> </LooseText><string>"Polygon.hpp"</string><LooseText><br>
-</LooseText></include><include><keyComp>#include</keyComp><LooseText> </LooseText><string>"Rectangle.hpp"</string><LooseText><br>
-</LooseText></include><include><keyComp>#include</keyComp><LooseText> </LooseText><string>"Triangle.h"</string><LooseText><br>
-</LooseText></include><LooseText><br>
-<br>
-<br>
+<include><keyComp>#include</keyComp> <string>"Polygon.hpp"</string></include><br>
+<include><keyComp>#include</keyComp> <string>"Rectangle.hpp"</string></include><br>
+<include><keyComp>#include</keyComp> <string>"Triangle.h"</string></include><br>
 <br>
 <br>
 <br>
-</LooseText><include><keyComp>#include</keyComp><LooseText> </LooseText><string>"la"</string><LooseText> <br>
-</LooseText></include><LooseText><br>
-</LooseText><command><statement>this_is_a_command</statement><LooseText>;</LooseText></command><LooseText> </LooseText><command><statement>alsoOne</statement><LooseText>;</LooseText></command><LooseText><br>
+<multiLineComment>/**********************<br>
+*&emsp;&emsp;PARSER<br>
+*&emsp;CRASH COURSE<br>
+**********************/</multiLineComment><br>
 <br>
 <br>
+<include><keyComp>#include</keyComp> <string>"la"</string> </include><comment>//comment</comment><br>
 <br>
-<br>
-</LooseText><fnDef><typeDef>someReturnType32</typeDef><LooseText> </LooseText><fnName>CLASSY:doThing</fnName><ArgDefs><LooseText>(</LooseText><ArgDef><typeDef>type1</typeDef><LooseText> </LooseText><fnName>arg1</fnName></ArgDef><LooseText>, </LooseText><ArgDef><typeDef>int</typeDef><LooseText> </LooseText><fnName>arg2</fnName></ArgDef><LooseText>)</LooseText></ArgDefs><LooseText> {<br>
-&emsp;</LooseText><command><statement><fnCall><fnName>doThing</fnName><args>()</args></fnCall></statement><LooseText>;</LooseText></command><LooseText><br>
-}</LooseText></fnDef><LooseText><br>
+<command><statement>this_is_a_command</statement>;</command> <command><statement>alsoOne</statement>;</command><br>
 <br>
 <br>
 <br>
 <br>
+<fnDef><typeDef>someReturnType32</typeDef> <fnName>CLASSY:doThing</fnName><ArgDefs>(<ArgDef><typeDef>type1</typeDef> <fnName>arg1</fnName></ArgDef>, <ArgDef><typeDef>int</typeDef> <fnName>arg2</fnName></ArgDef>)</ArgDefs> {<br>
+&emsp;<command><statement><fnCall><fnName>doThing</fnName><args>()</args></fnCall></statement>;</command><br>
+}</fnDef><br>
 <br>
 <br>
-</LooseText><fnDef><typeDef>void</typeDef><LooseText> </LooseText><fnName>printDetails</fnName><ArgDefs><LooseText>(</LooseText><ArgDef><typeDef>Polygon*</typeDef><LooseText> </LooseText><fnName>shape</fnName></ArgDef><LooseText>)</LooseText></ArgDefs><LooseText> {<br>
-&emsp;</LooseText><command><statement><bitLeft><statement>std::cout </statement><operator>&lt;&lt;</operator><statement><bitLeft><statement><LooseText> </LooseText><string>"Height: "</string><LooseText> </LooseText></statement><operator>&lt;&lt;</operator><statement><ptr><statement> shape</statement><operator>-&gt;</operator><statement><fnCall><fnName>getHeight</fnName><args>()</args></fnCall></statement></ptr></statement></bitLeft></statement></bitLeft></statement><LooseText>;</LooseText></command><LooseText><br>
-&emsp;</LooseText><command><statement><bitLeft><statement>std::cout </statement><operator>&lt;&lt;</operator><statement><bitLeft><statement><LooseText> </LooseText><string>", Width: "</string><LooseText> </LooseText></statement><operator>&lt;&lt;</operator><statement><ptr><statement> shape</statement><operator>-&gt;</operator><statement><fnCall><fnName>getWidth</fnName><args>()</args></fnCall></statement></ptr></statement></bitLeft></statement></bitLeft></statement><LooseText>;</LooseText></command><LooseText><br>
-<br>
-&emsp;<br>
-&emsp;</LooseText><command><statement><bitLeft><statement>std::cout </statement><operator>&lt;&lt;</operator><statement><bitLeft><statement><LooseText> </LooseText><string>", Area: "</string><LooseText> </LooseText></statement><operator>&lt;&lt;</operator><statement><ptr><statement> shape</statement><operator>-&gt;</operator><statement><fnCall><fnName>area</fnName><args>()</args></fnCall></statement></ptr></statement></bitLeft></statement></bitLeft></statement><LooseText>;</LooseText></command><LooseText><br>
-&emsp;</LooseText><command><statement><bitLeft><statement>std::cout </statement><operator>&lt;&lt;</operator><statement> std::endl</statement></bitLeft></statement><LooseText>;</LooseText></command><LooseText><br>
-}</LooseText></fnDef><LooseText><br>
-<br>
-</LooseText><fnDef><typeDef>int</typeDef><LooseText> </LooseText><fnName>main</fnName><ArgDefs>()</ArgDefs><LooseText> {<br>
-&emsp;<br>
-&emsp;</LooseText><command><statement><equal><reciever><typeDef>Polygon*</typeDef><LooseText> </LooseText><varName>rectangle</varName><LooseText> </LooseText></reciever><operator>=</operator><statement><LooseText> new </LooseText><fnCall><fnName>Rectangle</fnName><args><LooseText>(</LooseText><arg><statement><num>532</num></statement></arg><LooseText>, </LooseText><arg><statement><num>6</num></statement></arg><LooseText>)</LooseText></args></fnCall></statement></equal></statement><LooseText>;</LooseText></command><LooseText><br>
-&emsp;<br>
-&emsp;</LooseText><command><statement><fnCall><fnName>printDetails</fnName><args><LooseText>(</LooseText><arg><statement>rectangle</statement></arg><LooseText>)</LooseText></args></fnCall></statement><LooseText>;</LooseText></command><LooseText><br>
-&emsp;<br>
-&emsp;</LooseText><command><statement><ptr><statement>rectangle</statement><operator>-&gt;</operator><statement><fnCall><fnName>setHeight</fnName><args><LooseText>(</LooseText><arg><statement><num>10</num></statement></arg><LooseText>)</LooseText></args></fnCall></statement></ptr></statement><LooseText>;</LooseText></command><LooseText><br>
-&emsp;<br>
-&emsp;</LooseText><command><statement><ptr><statement>rectangle</statement><operator>-&gt;</operator><statement><fnCall><fnName>setWidth</fnName><args><LooseText>(</LooseText><arg><statement><num>10</num></statement></arg><LooseText>)</LooseText></args></fnCall></statement></ptr></statement><LooseText>;</LooseText></command><LooseText><br>
-&emsp;<br>
-&emsp;</LooseText><command><statement><fnCall><fnName>printDetails</fnName><args><LooseText>(</LooseText><arg><statement>rectangle</statement></arg><LooseText>)</LooseText></args></fnCall></statement><LooseText>;</LooseText></command><LooseText><br>
-&emsp;<br>
-&emsp;</LooseText><command><statement>delete rectangle</statement><LooseText>;</LooseText></command><LooseText><br>
-<br>
-&emsp;<br>
-&emsp;</LooseText><command><statement><equal><reciever><typeDef>Polygon*</typeDef><LooseText> </LooseText><varName>triangle</varName><LooseText> </LooseText></reciever><operator>=</operator><statement><LooseText> new </LooseText><fnCall><fnName>Triangle</fnName><args><LooseText>(</LooseText><arg><statement><num>7</num></statement></arg><LooseText>, </LooseText><arg><statement><num>9</num></statement></arg><LooseText>)</LooseText></args></fnCall></statement></equal></statement><LooseText>;</LooseText></command><LooseText><br>
-&emsp;<br>
-&emsp;</LooseText><command><statement><fnCall><fnName>printDetails</fnName><args><LooseText>(</LooseText><arg><statement>triangle</statement></arg><LooseText>)</LooseText></args></fnCall></statement><LooseText>;</LooseText></command><LooseText><br>
-&emsp;<br>
-&emsp;</LooseText><command><statement><ptr><statement>triangle</statement><operator>-&gt;</operator><statement><fnCall><fnName>setHeight</fnName><args><LooseText>(</LooseText><arg><statement><num>3</num></statement></arg><LooseText>)</LooseText></args></fnCall></statement></ptr></statement><LooseText>;</LooseText></command><LooseText><br>
-&emsp;<br>
-&emsp;</LooseText><command><statement><ptr><statement>triangle</statement><operator>-&gt;</operator><statement><fnCall><fnName>setWidth</fnName><args><LooseText>(</LooseText><arg><statement><num>4</num></statement></arg><LooseText>)</LooseText></args></fnCall></statement></ptr></statement><LooseText>;</LooseText></command><LooseText><br>
-&emsp;<br>
-&emsp;</LooseText><command><statement><fnCall><fnName>printDetails</fnName><args><LooseText>(</LooseText><arg><statement>triangle</statement></arg><LooseText>)</LooseText></args></fnCall></statement><LooseText>;</LooseText></command><LooseText><br>
-&emsp;<br>
-&emsp;</LooseText><command><statement>delete triangle</statement><LooseText>;</LooseText></command><LooseText><br>
 <br>
 <br>
-&emsp;</LooseText><conditionTree><condition><conditionType>if</conditionType><booleanable>(lalal)</booleanable><LooseText> {<br>
-&emsp;&emsp;</LooseText><conditionTree><condition><conditionType>if</conditionType><booleanable>(doda)</booleanable><LooseText> {<br>
+<comment>// Prints out some details on a Polygon.</comment><br>
+<comment>// Note that it's not passing through a particular Polygon (like Triangle or Rectangle), rather it's the parent.</comment><br>
+<fnDef><typeDef>void</typeDef> <fnName>printDetails</fnName><ArgDefs>(<ArgDef><typeDef>Polygon*</typeDef> <fnName>shape</fnName></ArgDef>)</ArgDefs> {<br>
+&emsp;<command><statement><bitLeft><statement>std::cout </statement><operator>&lt;&lt;</operator><statement><bitLeft><statement> <string>"Height: "</string> </statement><operator>&lt;&lt;</operator><statement><ptr><statement> shape</statement><operator>-&gt;</operator><statement><fnCall><fnName>getHeight</fnName><args>()</args></fnCall></statement></ptr></statement></bitLeft></statement></bitLeft></statement>;</command><br>
+&emsp;<command><statement><bitLeft><statement>std::cout </statement><operator>&lt;&lt;</operator><statement><bitLeft><statement> <string>", Width: "</string> </statement><operator>&lt;&lt;</operator><statement><ptr><statement> shape</statement><operator>-&gt;</operator><statement><fnCall><fnName>getWidth</fnName><args>()</args></fnCall></statement></ptr></statement></bitLeft></statement></bitLeft></statement>;</command><br>
 <br>
-&emsp;&emsp;}</LooseText></condition><LooseText><br>
-&emsp;&emsp;</LooseText><condition><conditionType>else if</conditionType><booleanable>(lnea)</booleanable><LooseText> {<br>
+&emsp;<comment>// Pay particular attention to the results of area(). Even though it's a Polygon, the children produce different results for the function call.</comment><br>
+&emsp;<command><statement><bitLeft><statement>std::cout </statement><operator>&lt;&lt;</operator><statement><bitLeft><statement> <string>", Area: "</string> </statement><operator>&lt;&lt;</operator><statement><ptr><statement> shape</statement><operator>-&gt;</operator><statement><fnCall><fnName>area</fnName><args>()</args></fnCall></statement></ptr></statement></bitLeft></statement></bitLeft></statement>;</command><br>
+&emsp;<command><statement><bitLeft><statement>std::cout </statement><operator>&lt;&lt;</operator><statement> std::endl</statement></bitLeft></statement>;</command><br>
+}</fnDef><br>
 <br>
-&emsp;&emsp;}</LooseText></condition><LooseText><br>
-</LooseText></conditionTree><LooseText><br>
-&emsp;}</LooseText></condition><LooseText><br>
-&emsp;</LooseText><default><conditionType>else</conditionType><LooseText> {<br>
+<fnDef><typeDef>int</typeDef> <fnName>main</fnName><ArgDefs>()</ArgDefs> {<br>
+&emsp;<comment>// Create a rectangle on the heap with a height of 5 and a width of 6</comment><br>
+&emsp;<command><statement><equal><reciever><typeDef>Polygon*</typeDef> <varName>rectangle</varName> </reciever><operator>=</operator><statement> new <fnCall><fnName>Rectangle</fnName><args>(<arg><statement><num>532</num></statement></arg>, <arg><statement><num>6</num></statement></arg>)</args></fnCall></statement></equal></statement>;</command><br>
+&emsp;<comment>// Print information using getters and method</comment><br>
+&emsp;<command><statement><fnCall><fnName>printDetails</fnName><args>(<arg><statement>rectangle</statement></arg>)</args></fnCall></statement>;</command><br>
+&emsp;<comment>// Set the height to 10 with a setter</comment><br>
+&emsp;<command><statement><ptr><statement>rectangle</statement><operator>-&gt;</operator><statement><fnCall><fnName>setHeight</fnName><args>(<arg><statement><num>10</num></statement></arg>)</args></fnCall></statement></ptr></statement>;</command><br>
+&emsp;<comment>// Set the width to 10 with a setter</comment><br>
+&emsp;<command><statement><ptr><statement>rectangle</statement><operator>-&gt;</operator><statement><fnCall><fnName>setWidth</fnName><args>(<arg><statement><num>10</num></statement></arg>)</args></fnCall></statement></ptr></statement>;</command><br>
+&emsp;<comment>// Print information using getters and method</comment><br>
+&emsp;<command><statement><fnCall><fnName>printDetails</fnName><args>(<arg><statement>rectangle</statement></arg>)</args></fnCall></statement>;</command><br>
+&emsp;<comment>// Cleanup the memory in the heap</comment><br>
+&emsp;<command><statement>delete rectangle</statement>;</command><br>
+<br>
+&emsp;<comment>// Create a triangle on the heap with a height of 7 and a width of 9</comment><br>
+&emsp;<command><statement><equal><reciever><typeDef>Polygon*</typeDef> <varName>triangle</varName> </reciever><operator>=</operator><statement> new <fnCall><fnName>Triangle</fnName><args>(<arg><statement><num>7</num></statement></arg>, <arg><statement><num>9</num></statement></arg>)</args></fnCall></statement></equal></statement>;</command><br>
+&emsp;<comment>// Print information using getters and method</comment><br>
+&emsp;<command><statement><fnCall><fnName>printDetails</fnName><args>(<arg><statement>triangle</statement></arg>)</args></fnCall></statement>;</command><br>
+&emsp;<comment>// Set the height to 3 with a setter</comment><br>
+&emsp;<command><statement><ptr><statement>triangle</statement><operator>-&gt;</operator><statement><fnCall><fnName>setHeight</fnName><args>(<arg><statement><num>3</num></statement></arg>)</args></fnCall></statement></ptr></statement>;</command><br>
+&emsp;<comment>// Set the width to 4 with a setter</comment><br>
+&emsp;<command><statement><ptr><statement>triangle</statement><operator>-&gt;</operator><statement><fnCall><fnName>setWidth</fnName><args>(<arg><statement><num>4</num></statement></arg>)</args></fnCall></statement></ptr></statement>;</command><br>
+&emsp;<comment>// Print information using getters and method</comment><br>
+&emsp;<command><statement><fnCall><fnName>printDetails</fnName><args>(<arg><statement>triangle</statement></arg>)</args></fnCall></statement>;</command><br>
+&emsp;<comment>// Cleanup the memory in the heap</comment><br>
+&emsp;<command><statement>delete triangle</statement>;</command><br>
+<br>
+<br>
+&emsp;<conditionTree><condition><conditionType>if</conditionType><booleanable>(lalal)</booleanable> {<br>
+&emsp;&emsp;<conditionTree><condition><conditionType>if</conditionType><booleanable>(doda)</booleanable> {<br>
+<br>
+&emsp;&emsp;}</condition><br>
+&emsp;&emsp;<condition><conditionType>else if</conditionType><booleanable>(lnea)</booleanable> {<br>
+<br>
+&emsp;&emsp;}</condition></conditionTree><br>
+<br>
+&emsp;}</condition><br>
+&emsp;<default><conditionType>else</conditionType> {<br>
 &emsp;&emsp;la<br>
-&emsp;}</LooseText></default><LooseText><br>
-</LooseText></conditionTree><LooseText><br>
+&emsp;}</default></conditionTree><br>
 <br>
 <br>
-&emsp;</LooseText><command><statement><LooseText>return </LooseText><num>0</num></statement><LooseText>;</LooseText></command><LooseText><br>
-}</LooseText></fnDef><LooseText><br>
-</LooseText></file>
+<br>
+&emsp;<command><statement>return <num>0</num></statement>;</command><br>
+}</fnDef><br>
+</file>

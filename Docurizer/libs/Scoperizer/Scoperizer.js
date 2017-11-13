@@ -12,9 +12,6 @@ const Permeate = require("./Permeate.js");
 
 
 
-
-
-
 exports.txtListToRegExpString = function(filePath) {
 	console.log();
 
@@ -47,8 +44,9 @@ exports.txtListToRegExpString = function(filePath) {
 *
 ********************************************/
 
-exports.Scope = function(scopeDef) {
+exports.Scope = function(ruleSet, scopeDef) {
 	var THIS = this;
+	THIS.ruleSet = ruleSet;
 	THIS.eventListeners = {};
 	
 	for(attName in scopeDef)
@@ -70,15 +68,99 @@ exports.Scope = function(scopeDef) {
 			}
 		};
 	}
+
+	THIS.capturingGroupCount = 0;
+
+	if(THIS.start) {
+		var regexText = THIS.start.source ? THIS.start.source : THIS.start;
+		var subGroupCount = 0;
+		for(var i = 0; i < regexText.length; i++) {
+			var char = regexText.charAt(i);
+			if(char == "\\") 
+				i++;
+
+			else if(char == "(" && regexText.charAt(i+1) != "?")
+				subGroupCount++;
+		}
+
+		THIS.capturingGroupCount = subGroupCount;
+		if(subGroupCount > 0 
+		&& (THIS.capturedScopesNames === undefined || THIS.capturedScopesNames.length != subGroupCount))
+			console.error("Scope Definition has capturing groups, but no scope defined for each", THIS, " if you want not capturing groups, look those up.");
+	}
 }
 
+exports.Scope.prototype.init = function() {
+	var THIS = this;
+	if(THIS.allowedSubScopes) {
+		THIS.subScopes = THIS.allowedSubScopes
+		.map((subScopeName) => {
+			var addMe = THIS.ruleSet.getScope(subScopeName);
+			if(addMe == undefined)
+				console.error("bad name for sub scope:", subScopeName);
+			return addMe;
+		}).filter((subScope) => {
+			return subScope != undefined;
+		}).sort((a, b)=> {
+			return a.priority > b.priority ? -1 : 1;
+		})
+	}
+	if(THIS.capturedScopesNames) {
+		THIS.capturedScopes = [];
+		THIS.capturedScopesNames.forEach((captureName) => {
+			var target = THIS.ruleSet.getScope(captureName);
+			THIS.capturedScopes.push(target);
 
+			if(target === undefined)
+				console.error("ERROR: bad name for captured scope", captureName, "in", THIS.name)
+		})
+	}
+	THIS.generateNextMatchRegex();
+}
 
-exports.LOOSE_TEXT_SCOPE = new exports.Scope({
-	name:"LooseText",
-	subScopes: [],
-	potentialSubScopes: [],
-});
+exports.Scope.prototype.generateNextMatchRegex = function() {
+	var scope = this;
+			
+	if(scope.end || (scope.subScopes && scope.subScopes.length)) {
+		var subsRegexString = "";
+		var groupNumOffset = 1;
+
+		scope.nextMatchGroupNums = {};
+		if(scope.end && scope.end != -1) {
+			subsRegexString += `(`+(scope.end.source ? scope.end.source : scope.end) +`)`;
+			scope.nextMatchGroupNums[groupNumOffset] = -1;
+			groupNumOffset++;
+		}
+
+		if(scope.subScopes) {
+			scope.subScopes.forEach((sub)=> {
+				if(subsRegexString.length)
+					subsRegexString += '|'
+
+				var source = (sub.start.source ? sub.start.source : sub.start);
+				source = source.replace(/\\(\d+)/g, (replaceMe, groupNum) => {
+					groupNum = parseInt(groupNum) + groupNumOffset;
+					console.log("REPLACE", replaceMe);
+					return "\\"+groupNum;
+				})
+
+				subsRegexString += `(`+ source + `)`;
+				scope.nextMatchGroupNums[groupNumOffset] = sub;
+				groupNumOffset += sub.capturingGroupCount + 1;
+			});
+		}
+
+		if(scope.end == -1) {
+			if(subsRegexString.length)
+				subsRegexString += '|';
+			subsRegexString += `([\\S\\s])`;
+			scope.nextMatchGroupNums[groupNumOffset] = -1;
+		}
+
+		if(subsRegexString.length)
+			scope.nextMatchRegex = new RegExp(subsRegexString, 'g');
+	}
+}
 
 
 exports.Scope.prototype.on = function(eventName, fn) {
@@ -98,6 +180,12 @@ exports.Scope.prototype.removeEventListener = function(eventName, fn) {
 	if(target != -1)
 		return THIS.eventListeners[eventName].splice(target, 1);
 }
+
+
+exports.LOOSE_TEXT_SCOPE = new exports.Scope(null, {
+	name:"LooseText",
+});
+
 
 
 
@@ -123,31 +211,8 @@ exports.RuleSet = function(scopeDefs) {
 	scopeDefs.list.forEach(function(scopeDef, index) {
 
 		scopeDef.priority = scopeDefs.list.length - index;
-		scopeDef.startID = 2*index;
-		scopeDef.endID = scopeDef.startID + 1;
-		scopeDef.capturingGroupCount = 0;
-
-		if(scopeDef.start) {
-			var regexText = scopeDef.start.source ? scopeDef.start.source : scopeDef.start;
-			var subGroupCount = 0;
-			for(var i = 0; i < regexText.length; i++) {
-				var char = regexText.charAt(i);
-				if(char == "\\") 
-					i++;
-
-				else if(char == "(" && regexText.charAt(i+1) != "?")
-					subGroupCount++;
-			}
-
-			scopeDef.capturingGroupCount = subGroupCount;
-			if(subGroupCount > 0 
-			&& (scopeDef.capturedScopesNames === undefined || scopeDef.capturedScopesNames.length != subGroupCount))
-				console.error("Scope Definition has capturing groups, but no scope defined for each", scopeDef, " if you want not capturing groups, look those up.");
-		}
-
 		
-
-		var scope = new exports.Scope(scopeDef);
+		var scope = new exports.Scope(THIS, scopeDef);
 
 		if(scopeDef == scopeDefs.root)
 			THIS.rootScope = scope
@@ -157,105 +222,95 @@ exports.RuleSet = function(scopeDefs) {
 	})
 
 	THIS.scopes.all.forEach((scope) => {
-		if(scope.allowedSubScopes) {
-			scope.subScopes = scope.allowedSubScopes
-			.map((subScopeName) => {
-				var addMe = THIS.scopes.byID[subScopeName];
-				if(addMe == undefined)
-					console.error("bad name for sub scope:", subScopeName);
-				return addMe;
-			}).filter((subScope) => {
-				return subScope != undefined;
-			}).sort((a, b)=> {
-				return a.priority > b.priority ? -1 : 1;
-			})
-		}
+		scope.init();
 	})
-
-	// THIS.computeSubScopes();
-	THIS.computeCaptureScopes();
 }
 
 exports.RuleSet.prototype.getScope = function(scopeName) {
 	return this.scopes.byID[scopeName];
 }
 
-exports.RuleSet.prototype.computeCaptureScopes = function() {
-	var THIS = this;
-	THIS.scopes.all.forEach((scope) => {
-		if(scope.capturedScopesNames) {
-			scope.capturedScopes = [];
-			scope.capturedScopesNames.forEach((captureName) => {
-				var target = THIS.scopes.byID[captureName];
-				scope.capturedScopes.push(target);
-
-				if(target === undefined)
-					console.error("ERROR: bad name for captured scope", captureName, "in", scope.name)
-			})
-		}
-
-
-		
-		
-		if(scope.end || (scope.subScopes && scope.subScopes.length)) {
-			var subsRegexString = "";
-			var groupNumOffset = 1;
-
-			scope.nextMatchGroupNums = {};
-			if(scope.end && scope.end != -1) {
-				subsRegexString += `(`+(scope.end.source ? scope.end.source : scope.end) +`)`;
-				scope.nextMatchGroupNums[groupNumOffset] = -1;
-				groupNumOffset++;
-			}
-
-			if(scope.subScopes) {
-				scope.subScopes.forEach((sub)=> {
-					if(subsRegexString.length)
-						subsRegexString += '|'
-
-					var source = (sub.start.source ? sub.start.source : sub.start);
-					source = source.replace(/\\(\d+)/g, (replaceMe, groupNum) => {
-						groupNum = parseInt(groupNum) + groupNumOffset;
-						console.log("REPLACE", replaceMe);
-						return "\\"+groupNum;
-					})
-
-					subsRegexString += `(`+ source + `)`;
-					scope.nextMatchGroupNums[groupNumOffset] = sub;
-					groupNumOffset += sub.capturingGroupCount + 1;
-				});
-			}
-
-			if(scope.end == -1) {
-				if(subsRegexString.length)
-					subsRegexString += '|';
-				subsRegexString += `([\\S\\s])`;
-				scope.nextMatchGroupNums[groupNumOffset] = -1;
-			}
-
-			if(subsRegexString.length)
-				scope.nextMatchRegex = new RegExp(subsRegexString, 'g');
-		}
-
-		// console.log(scope);
-		
-	})
-}
-
-
-
 
 exports.RuleSet.prototype.removeBreakingScopes = function(file) {
 	var THIS = this;
 	file.rawCode = file.rawText;
+	file.nonCodeSplices = [];
 	if(THIS.anywhereScopes) {
-		THIS.anywhereScopes.forEach((scope) => {
-			file.rawCode = file.rawCode.replace(new RegExp(scope.start, 'g'), (text, index) => {
-				return '';
-			});
-		});
+		var scopeTool = new exports.Scope(THIS, {
+			name: "breakingScopes",
+			allowedSubScopes: THIS.anywhereScopes
+		})
+		scopeTool.init();
+
+		var totalOffset = 0;
+		file.rawCode = file.rawCode.replace(scopeTool.nextMatchRegex, function(){
+			var text = arguments[0];
+			var index = arguments[arguments.length-2];
+			console.log(text, index);
+
+			var matchNum = undefined;
+			for(var m = 1; matchNum === undefined && m < arguments.length -2; m++) {
+				matchNum = arguments[m] !== undefined ? m : undefined;
+			}
+			var scope = scopeTool.nextMatchGroupNums[matchNum];
+
+			file.nonCodeSplices.push({
+				scope: scope,
+				index: index,
+				length: text.length,
+				totalOffset: totalOffset
+			})
+			totalOffset += text.length;
+
+			// console.log(file.rawText.substr(index, text.length));
+			return '';
+		})
+		
+		// THIS.anywhereScopes.forEach((scope) => {
+		// 	file.rawCode = file.rawCode.replace(new RegExp(scope.start, 'g'), (text, index) => {
+		// 		totalOffset += text.length;
+		// 		file.nonCodeSplices.push({
+		// 			scope: scope,
+		// 			index: index,
+		// 			length: text.length
+		// 		})
+		// 		console.log(text);
+		// 		return '';
+		// 	});
+		// });
+
+		// //could be removed to be done later, only if needed
+		// var totalOffset = 0;
+		// file.nonCodeSplices.sort((a,b) => {
+		// 	return a.index - b.index;
+		// }).forEach((splice) => {
+		// 	splice.totalOffset = totalOffset;
+		// 	totalOffset += splice.length;
+
+		// 	console.log(file.rawText.substr(splice.index, splice.length));
+		// });
 	}
 }
+
+
+
+exports.RuleSet.prototype.reinjectBreakingScopes = function(scopeRoot) {
+	var THIS = this;
+
+	scopeRoot.file.nonCodeSplices.forEach((splice) => {
+		var codeIndex = splice.index - splice.totalOffset;
+		scopeRoot.spawnSubChunk({
+			scope: splice.scope,
+			startIndex: codeIndex,
+			endIndex: codeIndex,
+
+			rawStartIndex: splice.index,
+			rawEndIndex: splice.index + splice.length,
+			isNonCode: true
+		})
+	})
+}
+
 
 
 
@@ -276,10 +331,12 @@ exports.RuleSet.prototype.scopify = function(file) {
 
 	var out = new exports.ScopeChunk(file, {
 		startIndex: 0,
-		endIndex: file.rawCode.length-1,
+		endIndex: file.rawCode.length,
 		scope: THIS.rootScope,
 	});
 	out.scopify();
+
+	THIS.reinjectBreakingScopes(out);
 	return out;
 }
 
@@ -318,15 +375,26 @@ exports.RuleSet.prototype.scopify = function(file) {
 ********************************************/
 
 
-
+//TODO?: remove startIndex and replace with a check to prevChunk.end or parentChunk.start
 exports.ScopeChunk = function(file, scopeInfo) {
 	var THIS = this;
 
 	THIS.scopeInfo = scopeInfo;
 
+	//for quick searching
 	THIS.subChunks = [];
-	THIS.glazedChunks = [];
 	THIS.subChunksByName = {};
+
+	THIS.glazedChunks = [];
+
+
+	THIS.rawStartIndex = scopeInfo.rawStartIndex;
+	THIS.rawEndIndex = scopeInfo.rawEndIndex;
+	THIS.isNonCode = scopeInfo.isNonCode;
+	
+
+	//defined as chunks are added
+	THIS.firstSubChunk;
 	THIS.lastSubChunk;
 	THIS.parentChunk;
 	THIS.prevChunk;
@@ -359,7 +427,7 @@ exports.ScopeChunk = function(file, scopeInfo) {
 		THIS.endIndex = scopeInfo.endIndex;
 
 	else if(THIS.startMatch && THIS.scope.end == undefined) {
-		THIS.endIndex = THIS.startMatch.index + THIS.startMatch.text.length - 1;
+		THIS.endIndex = THIS.startMatch.index + THIS.startMatch.text.length;
 	}
 }
 
@@ -377,10 +445,6 @@ exports.ScopeChunk.prototype.getCharLimit = function() {
 
 
 
-
-
-
-
 /******************************************
 *
 *		ScopeChunk - scopify!!!!
@@ -391,33 +455,19 @@ exports.ScopeChunk.prototype.getCharLimit = function() {
 exports.ScopeChunk.prototype.scopify = function(fastMode, depth) {
 	var THIS = this;
 
-
-
 	let scope = THIS.scope,
 		rawCode = THIS.file.rawCode,
 		indexOffset = THIS.startIndex,
 		subScopes = THIS.subScopes,
 		nextMatchRegex = THIS.scope.nextMatchRegex;
 
-	console.log(scope.name, THIS.endIndex, THIS.startMatch, scope.end);
 
-
-	var searchableCode = THIS.file.rawCode.substring(indexOffset, THIS.getCharLimit()+1);
+	var searchableCode = THIS.file.rawCode.substring(indexOffset, THIS.getCharLimit());
 	var charStart = 0;
 
 
-	var addLooseText = function(endIndex){
-		if(charStart <= endIndex) {
-			THIS.spawnSubChunk({
-				scope: exports.LOOSE_TEXT_SCOPE,
-				startIndex: indexOffset+charStart,
-				endIndex: indexOffset+endIndex
-			});
-			charStart = endIndex+1;
-		}
-	}
-
-
+	//special case for when a scope has capturedScopes but no subscopes, and is child
+	//to a captured scope.
 	var matchCaptures = THIS.scopeInfo.matchCaptures;
 	if(scope.capturedScopes != undefined && matchCaptures == undefined && scope.start) {
 		if(THIS.startRegex == undefined)
@@ -435,18 +485,12 @@ exports.ScopeChunk.prototype.scopify = function(fastMode, depth) {
 
 
 	if(matchCaptures && scope.capturedScopes != undefined) {
-
-		console.log(matchCaptures);
 			//
 		for(var m = 0; m < matchCaptures.length; m++) {
 			var capture = matchCaptures[m];
-
-			console.log(matchCaptures, scope.name);
 			var captureScope = scope.capturedScopes[m];
 
 			if(captureScope != undefined) {
-				// console.log(searchableCode.slice(charStart), capture);
-
 				var nextIndex = searchableCode.slice(charStart).indexOf(capture)
 				if(nextIndex == -1)
 					console.error("Could not find")
@@ -459,25 +503,18 @@ exports.ScopeChunk.prototype.scopify = function(fastMode, depth) {
 						index: indexOffset + nextIndex 
 					}
 				}
-					
-				addLooseText(nextIndex-1);
 
-				console.log(nextScopeInfo);
 				var outcome = THIS.spawnSubChunk(nextScopeInfo);
 				outcome.scopify();
-				charStart = (outcome.endIndex - indexOffset) +1;	
+				charStart = (outcome.endIndex - indexOffset);	
 			}			
 		}
 	}
-
-	console.log(scope.name, scope.subScopes);
 
 
 	//while there are subscopes left to branch into..
 	var subScopesLeft = (nextMatchRegex != undefined);
 	while(subScopesLeft) {
-
-		// console.log(THIS.scope.name, scope.subScopes.length)
 			//
 		nextMatchRegex.lastIndex = charStart;
 		var regexMatch = nextMatchRegex.exec(searchableCode);
@@ -491,18 +528,17 @@ exports.ScopeChunk.prototype.scopify = function(fastMode, depth) {
 		else {
 			var matchNum = undefined;
 			for(var m = 1; matchNum === undefined && m < regexMatch.length; m++) {
-				console.log(m, regexMatch[m])
 				matchNum = regexMatch[m] !== undefined ? m : undefined;
 			}
 			let matchScope = scope.nextMatchGroupNums[matchNum];
-			console.log("match", matchNum, regexMatch, nextMatchRegex.source);
-
 
 			
 			if(matchScope == -1) { // && scope.end) {
-				console.log("IS END")
+				// console.log("IS END")
 				subScopesLeft = false;
 				THIS.endIndex = indexOffset + regexMatch.index;
+				if(scope.endInclusive)
+					THIS.endIndex += regexMatch[0].length;
 			}
 			else {
 				let matchCaptures;
@@ -526,15 +562,9 @@ exports.ScopeChunk.prototype.scopify = function(fastMode, depth) {
 				if(matchScope.startInclusive != true)
 					startIndex += regexMatch[0].length;
 
-					
-				addLooseText(startIndex-1);
-
-				console.log(nextScopeInfo.scope.name)
-
 				var outcome = THIS.spawnSubChunk(nextScopeInfo);
 				outcome.scopify();
-				charStart = (outcome.endIndex - indexOffset) +1;
-				console.log(outcome.endIndex, indexOffset, charStart);
+				charStart = (outcome.endIndex - indexOffset);
 			}
 		}
 	}
@@ -542,11 +572,10 @@ exports.ScopeChunk.prototype.scopify = function(fastMode, depth) {
 		
 	
 	if(charStart > 0)
-		addLooseText(THIS.endIndex - indexOffset);
+		THIS.spawnLooseTextChunk(indexOffset+charStart, THIS.endIndex)
 	
 	if(THIS.glazedChunks.length == 0)
 		THIS.complete();
-
 }
 
 
@@ -557,34 +586,233 @@ exports.ScopeChunk.prototype.scopify = function(fastMode, depth) {
 
 
 
-exports.ScopeChunk.prototype.spawnSubChunk = function(scopeInfo) {
+
+
+
+exports.ScopeChunk.prototype.spawnLooseTextChunk = function(start, end) {
+	if(start <= end) {
+		return this.spawnSubChunk({
+			scope: exports.LOOSE_TEXT_SCOPE,
+			startIndex: start,
+			endIndex: end
+		});
+	}
+}
+
+
+
+
+exports.ScopeChunk.prototype.spawnSubChunk = function(scopeInfoOrChunk, isChunk) {
 	var THIS = this;
-	var addMe = new exports.ScopeChunk(THIS.file, scopeInfo);
-	THIS.appendSubChunk(addMe);
-	return addMe;
+	var addMe = isChunk ? scopeInfoOrChunk : new exports.ScopeChunk(THIS.file, scopeInfoOrChunk);
+
+	//Automatically add any loose text up to this new chunk
+	if((THIS.lastSubChunk == undefined && addMe.startIndex > THIS.startIndex) 
+	|| (THIS.lastSubChunk && THIS.lastSubChunk.endIndex < addMe.startIndex)) {
+		var start = THIS.lastSubChunk != undefined ? THIS.lastSubChunk.endIndex : THIS.startIndex;
+		THIS.spawnLooseTextChunk(start, addMe.startIndex);
+	} 
+
+
+	//If chunk is being appended, simply append
+	if(THIS.lastSubChunk == undefined || THIS.lastSubChunk.endIndex == addMe.startIndex) {
+		THIS.appendSubChunk(addMe);
+		return addMe;
+	}
+
+	//If chunk is being injected, more work is needed
+	//find the chunk that it starts in
+	var targetChunk;
+	for(var ptr = THIS.firstSubChunk; ptr != undefined; ptr = ptr.nextChunk) {
+		if(ptr.startIndex <= addMe.startIndex) 
+			targetChunk = ptr;
+		else break;
+	}
+
+	if(targetChunk == undefined)
+		console.error("targetChunk Somehow undefined", THIS.firstSubChunk.startIndex, addMe.startIndex, THIS.firstSubChunk.scope.name)
+
+	//if the added chunk can fit in the current one, do so
+	//if not, error below
+	if(targetChunk.endIndex >= addMe.endIndex) {
+
+		//if the current chunk is a loose text one, split it into parts
+		//and insert the new chunk in the middle
+		if(targetChunk.scope == exports.LOOSE_TEXT_SCOPE) {
+			var insertAfter = targetChunk.prevChunk;
+
+			console.log(targetChunk.scope);
+			targetChunk.removeSelfFromParent();
+			if(targetChunk.startIndex < addMe.startIndex) {
+				var pre = new exports.ScopeChunk(THIS.file, {
+					scope: exports.LOOSE_TEXT_SCOPE,
+					startIndex: targetChunk.startIndex,
+					endIndex: addMe.startIndex
+				})
+				THIS.insertSubChunkAfter(pre, insertAfter);
+				insertAfter = pre;
+			}
+
+			THIS.insertSubChunkAfter(addMe, insertAfter);
+			insertAfter = addMe;
+
+
+			if(targetChunk.endIndex > addMe.endIndex) {
+				var post = new exports.ScopeChunk(THIS.file, {
+					scope: exports.LOOSE_TEXT_SCOPE,
+					startIndex: addMe.endIndex,
+					endIndex: targetChunk.endIndex
+				})
+				THIS.insertSubChunkAfter(post, insertAfter);
+			}
+
+			return addMe;
+		}
+		// else return;
+		//otherwise, sprout into it, passing along the premade chunk
+		else return targetChunk.spawnSubChunk(addMe, true);
+	}
+
+	console.error("can not insert chunk which overlaps other chunk boundaries", ptr.startIndex, ptr.endIndex, addMe.startIndex, addMe.endIndex);
+	
 }
 
 
 
 exports.ScopeChunk.prototype.appendSubChunk = function(addMe) {
+	return this.insertSubChunkAfter(addMe, -1);
+}
+
+
+exports.ScopeChunk.prototype.insertSubChunkAfter = function(addMe, prevChunk) {
 	var THIS = this;
 
-	// addMe.removeSelfFromParent();
+
+	if(prevChunk && prevChunk != -1 && prevChunk.parentChunk != THIS) {
+		console.error("can not insert after non child", THIS, prevChunk)
+		return;
+	}
+
+	addMe.removeSelfFromParent();
 	addMe.parentChunk = THIS;
 
-	THIS.subChunks.push(addMe);
+	//Add chunk to list
+	if(prevChunk == -1 || prevChunk == THIS.lastSubChunk)
+		THIS.subChunks.push(addMe);
+
+	else {
+		THIS.subChunks.splice(THIS.subChunks.indexOf(prevChunk) + 1, 0, addMe);
+		console.error("NO CASE MADE FOR INSERT")
+	}
+
+
+
+	//Add to chunks by name
 	var scopeName = THIS.file != "TEST_MODE" ? addMe.scope.name : "testScope";
 	if(THIS.subChunksByName[scopeName] == undefined)
 		THIS.subChunksByName[scopeName] = [];
 
-	THIS.subChunksByName[scopeName].push(addMe);
+	var byName = THIS.subChunksByName[scopeName];
+	if(prevChunk == -1 || prevChunk == THIS.lastSubChunk || byName.length == 0) 
+		byName.push(addMe);
 
-	if(THIS.lastSubChunk != undefined){
-		THIS.lastSubChunk.nextChunk = addMe;
-		addMe.prevChunk = THIS.lastSubChunk;
+	else {
+		var targetIndex = byName.findIndex((sub) => {
+			return sub.startIndex > addMe.startIndex;
+		});
+		if(targetIndex != -1)
+			byName.splice(targetIndex, 0, addMe)
+		else
+			byName.push(addMe);
 	}
-	THIS.lastSubChunk = addMe;
+
+
+	//special cases for prev chunk,
+	//undefined means at beginning
+	//-1 means at end
+	//otherwise stitch into center
+	if(prevChunk == undefined) {
+		if(THIS.firstSubChunk) {
+			addMe.nextChunk = THIS.firstSubChunk;
+			addMe.nextChunk.prevChunk = addMe;
+		}
+		THIS.firstSubChunk = addMe;
+		THIS.lastSubChunk = THIS.lastSubChunk || addMe;
+	}
+	else if(prevChunk == -1 || prevChunk == THIS.lastSubChunk) {
+		if(THIS.lastSubChunk) {
+			addMe.prevChunk = THIS.lastSubChunk;
+			addMe.prevChunk.nextChunk = addMe;
+		}
+		THIS.lastSubChunk = addMe;
+		THIS.firstSubChunk = THIS.firstSubChunk || addMe;
+	}
+	else {
+		if(prevChunk.nextChunk != undefined) {
+			addMe.nextChunk = prevChunk.nextChunk;
+			addMe.nextChunk.prevChunk = addMe;
+		}
+
+		prevChunk.nextChunk = addMe;
+		addMe.prevChunk = prevChunk;
+	}
 }
+
+
+exports.ScopeChunk.prototype.removeSelfFromParent = function() {
+	if(this.parentChunk)
+		this.parentChunk.removeSubChunk(this);
+}
+
+exports.ScopeChunk.prototype.removeSubChunk = function(target) {
+	var THIS = this; 
+
+	if(target == undefined)
+		return;
+
+	else if(target.parentChunk != THIS) {
+		console.error("can't remove chunk that is not a sub")
+		return;
+	}
+
+	if(target == THIS.firstSubChunk)
+		THIS.firstSubChunk = target.nextChunk;
+
+	if(target == THIS.lastSubChunk)
+		THIS.lastSubChunk = target.prevChunk;
+
+	var scopeName = THIS.file != "TEST_MODE" ? target.scope.name : "testScope";
+	var byName = THIS.subChunksByName[scopeName];
+	if(byName) {
+		var targetIndex = byName.indexOf(target);
+		if(targetIndex != -1) 
+			byName.splice(targetIndex, 1);
+
+		else console.error("removing sub chunk not found in byName")
+	}	
+
+	var targetIndex = THIS.subChunks.indexOf(target);
+	if(targetIndex > -1)
+		THIS.subChunks.splice(targetIndex, 1);
+	else {
+		console.error("could not find target in subChunks list", target)
+		console.log(THIS.subChunks.map((sub)=>{return sub.startIndex + ' ' + sub.scope.name}));
+	}
+
+	if(target.nextChunk)
+		target.nextChunk.prevChunk = target.prevChunk;
+
+	if(target.prevChunk)
+		target.prevChunk.nextChunk = target.nextChunk;
+
+	target.parentChunk = undefined;
+}
+
+
+
+
+
+
 
 
 
@@ -593,35 +821,47 @@ exports.ScopeChunk.prototype.appendSubChunk = function(addMe) {
 *********************************/
 
 
-// exports.ScopeChunk.prototype.setCurrentEndMatch = function(endMatch) {
-// 	var THIS = this;
-// 	THIS.endMatch = endMatch;
-// 	THIS.endIndex = endMatch.index - 1;
-
-// 	if(THIS.scope.endInclusive)
-// 		THIS.endIndex += endMatch.text.length;
-// }
-
-
-
-exports.ScopeChunk.prototype.getRawTextReal = function() {
-	var THIS = this;
-	if(THIS.rawText == undefined)
-		THIS.rawText = THIS.file.rawText.substring(THIS.startIndex, THIS.endIndex+1);
-
-	return THIS.rawText;
+exports.ScopeChunk.prototype.getRawCode = function() {
+	return this.rawCode ? this.rawCode 
+		: (this.rawCode = this.file.rawCode.substring(this.startIndex, this.endIndex));
 }
-
-
 
 
 exports.ScopeChunk.prototype.getRawText = function() {
-	var THIS = this;
-	if(THIS.rawCode == undefined)
-		THIS.rawCode = THIS.file.rawCode.substring(THIS.startIndex, THIS.endIndex+1);
-
-	return THIS.rawCode;
+	return this.rawText ? this.rawText 
+		: (this.rawText = this.file.rawText.substring(this.getRawStartIndex(), this.getRawEndIndex()));
 }
+
+exports.ScopeChunk.prototype.getRawStartIndex = function() {
+	return this.rawStartIndex !== undefined ? this.rawStartIndex 
+		: (this.rawStartIndex = this.getRawRelativeCodeIndex(this.startIndex));
+}
+
+exports.ScopeChunk.prototype.getRawEndIndex = function() {
+	return this.rawEndIndex !== undefined ? this.rawEndIndex 
+		: (this.rawEndIndex = this.getRawRelativeCodeIndex(this.endIndex));
+}
+
+exports.ScopeChunk.prototype.getRawRelativeCodeIndex = function(codeIndex) {
+	console.log("calculating", this.scope.name)
+	var THIS = this;
+	var out = codeIndex;
+
+	var splices = THIS.file.nonCodeSplices;
+	var target = -1 + splices.find((splice) => {
+		return splice.index - splice.totalOffset > codeIndex;
+	})
+
+	if(target >= 0)
+		out += splices[target].totalOffset;
+
+	return out;
+}
+
+
+
+
+
 
 
 
@@ -758,27 +998,37 @@ exports.ScopeChunk.prototype.getSubsOfName = function(subScopeName, args) {
 exports.ScopeChunk.prototype.fastShallowSubNameSearch = function(subScopeName, args) {
 	var THIS = this;
 	var subsOfName = THIS.subChunksByName[subScopeName];
+
+	var atMatchLimit = function() {
+		return args.matchLimit !== undefined && args.matches.length >= args.matchLimit-1;
+	}
+
+
 	if(subsOfName && subsOfName.length) {
 		if(args.startAfter) {
 			var startIndex = subsOfName.indexOf(args.startAfter);
 			if(startIndex != -1) {
 				for(var i = startIndex + 1; i > -1 && i < subsOfName.length; i++) {
 					args.matches.push(subsOfName[i]);
-					if(args.matchLimit !== undefined && args.matches.length >= args.matchLimit-1)
+					if(atMatchLimit())
 						break;
 				}
 			}
 		}
 		else {
-			subsOfName.forEach((sub) => {
-				args.matches.push(sub);
-			})
+			for(var i = 0; i < subsOfName.length; i++) {
+				args.matches.push(subsOfName[i]);
+				if(atMatchLimit())
+					break;
+			}
 		} 
 	}
 	else if(subScopeName == "*") {
-		THIS.subChunks.forEach((sub) => {
+		for(var sub = THIS.firstSubChunk; sub != undefined; sub = sub.nextChunk) {
 			args.matches.push(sub);
-		})
+			if(atMatchLimit())
+				break;
+		}
 	} 
 }
 
@@ -787,7 +1037,7 @@ exports.ScopeChunk.prototype.fastShallowSubNameSearch = function(subScopeName, a
 exports.ScopeChunk.prototype.hardSubNameSearch = function(subScopeName, args) {
 	var THIS = this;
 	var matches = args.matches;
-	var startAt = args.startAfter ? args.startAfter.nextChunk : THIS.subChunks[0];
+	var startAt = args.startAfter ? args.startAfter.nextChunk : THIS.firstSubChunk;
 
 	args.startAfter = undefined;
 

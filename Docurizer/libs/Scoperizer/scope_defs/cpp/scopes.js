@@ -21,38 +21,23 @@ var LINE_ENDS = /\n|$|\/\//;
 
 
 exports.anywhereScopes = [
-	{
-		start:  /\/\*[\s\S]*\*\//,
-	},
-	{
-		start: /\/\/.*/,
-	}
-	
-	// {
-	// 	name: "multiLineComment",
-	// 	start:  "/\\*",
-	// 	startInclusive: true,
-	// 	end: "\\*/|$",
-	// 	endInclusive : true,
-	// },
+	"multiLineComment",
+	"comment"
 ]
 
-
-var fakeFnDef = {
-	name: "fnDef",
-	start: /(?:(\w\S*)\s+)?(\w\S*)(\(.*\))\s*{/,
-	// start: "\\w.*\\(",
-	startInclusive: true,
-	end: /\}/,
-	endInclusive: true,
-	matchedSubScopes: ["typeDef", "fnName", "fnDefTemplateArgs"],
-	allowedSubScopes: ["fnDefHeader", "block", COMMENTS]
-}
 
 
 
 exports.list = [
 	exports.root,
+	{
+		name: "multiLineComment",
+		start:  /\/\*[\s\S]*\*\//,
+	},
+	{
+		name: "comment",
+		start: /\/\/.*/,
+	},
 	// {
 	// 	name: "comment",
 	// 	start:  "//",

@@ -43,7 +43,7 @@ DOCZ.registerFile = function(file) {
 cppParser.getScope("include").on("complete", function(scopeChunk) {
 	var chunk = scopeChunk.getFirstSub(">string");
 	if(chunk) {
-		var include = chunk.getRawText().replace(/"/g, '');
+		var include = chunk.getRawCode().replace(/"/g, '');
 		chunk.file.addInclude(include);
 		scopeChunk.includePath = include;
 	}
@@ -260,11 +260,11 @@ DOCZ.class.ClassInfo.prototype.mineFiles = function() {
 			
 			var fnNameChunk = fnDef.getFirstSub(">fnDefHeader>fnCall>fnName");
 			if(fnNameChunk == undefined) {
-				console.error("\nERROR: No name found in fnHeader", fnDef.getRawText().substr(0, 32));
+				console.error("\nERROR: No name found in fnHeader", fnDef.getRawCode().substr(0, 32));
 				console.error(fnDef.file.nameAndExtension);
 				return;
 			}
-			functionInfo.name = fnNameChunk.getRawText();
+			functionInfo.name = fnNameChunk.getRawCode();
 
 			var returnType = fnDef.getFirstSub(">fnDefHeader>returnType");
 			functionInfo.headerHtml = `<fnDefHeader>`;
