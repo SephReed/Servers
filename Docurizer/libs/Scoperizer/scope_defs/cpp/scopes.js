@@ -6,7 +6,7 @@ exports.name = "c++";
 exports.root = {
 	name: "file",
 	// allowedSubScopes: ["include", "block", "fnDef", "classDef", "string", "keyComp", "keyClass", "keyVar", "comment", "multiLineComment"]
-	allowedSubScopes: ["include", "command", "fnDef", "classDef"]
+	allowedSubScopes: ["ifndef", "include", "command", "fnDef", "define", "classDef"]
 }
 
 
@@ -22,7 +22,8 @@ var LINE_ENDS = /\n|$|\/\//;
 
 exports.anywhereScopes = [
 	"multiLineComment",
-	"comment"
+	"comment",
+	"string"
 ]
 
 
@@ -32,12 +33,40 @@ exports.list = [
 	exports.root,
 	{
 		name: "multiLineComment",
-		start:  /\/\*[\s\S]*\*\//,
+		start:  /\/\*[\s\S]*?\*\//,
+		// allowedSubScopes: ["TODO"],
 	},
 	{
 		name: "comment",
 		start: /\/\/.*/,
+		// allowedSubScopes: ["TODO"],
 	},
+
+		{
+			name: "TODO",
+			// start:  /^\/[\/\*]TODO:[\s\S]*/,
+			start: "TODO"
+		},
+
+	{
+		name: "ifndef",
+		start: /(#ifndef)\s+(\w+)/,
+		startInclusive: true,
+		end: "#endif",
+		endInclusive: true,
+		capturedScopesNames: ["keyComp", "compVarName"],
+		allowedSubScopes: exports.root.allowedSubScopes,
+	},
+
+		{ name: "compVarName", },
+
+	{
+		name: "define",
+		start: /(#define)\s+(\w+)/,
+		startInclusive: true,
+		capturedScopesNames: ["keyComp", "compVarName"],
+	},
+
 	// {
 	// 	name: "comment",
 	// 	start:  "//",
@@ -46,49 +75,59 @@ exports.list = [
 	// 	endInclusive : true,
 	// 	allowedSubScopes: ["TODO"]
 	// },
-	// 	{
-	// 		name: "TODO",
-	// 		start:  "//TODO:",
-	// 		startInclusive: true,
-	// 		end: /\n|$/,
-	// 		endInclusive : false,
-	// 	},
+	// 	
 
 	
 	{
 		name: "include",
-		start:  "#include",
+		start:  "(#include)",
 		startInclusive: true,
 		end: /\n/,
 		endInclusive: false,
-		allowedSubScopes: ["keyComp", "string"],
+		allowedSubScopes: ["string"],
+		capturedScopesNames: ["keyComp"]
 	},
 	{
 		name: "fnDef",
-		start: /(?:(\w\S*)\s+)?(\w\S*)(\(.*\))\s*{/,
+		start: /(?:(\w\S*)\s+)?(\w\S*?\(.*?\))\s*{/,
 		// start: "\\w.*\\(",
 		startInclusive: true,
 		end: /\}/,
 		endInclusive: true,
-		capturedScopesNames: ["typeDef", "fnName", "ArgDefs"],
+		capturedScopesNames: ["typeDef", "fnCallDef"],
 		allowedSubScopes: ["conditionTree", "command"]
 	},
 
-		{
-			name: "typeDef",
+		{ name: "typeDef", },
+
+		{ 
+			name: "fnCallDef", 
+			start: /([~\w]\S*?)(\(.*?\))/,
+			capturedScopesNames: ["fnName", "argDefs"]
 		},
 
-
-		{
-			name: "ArgDefs",
-			allowedSubScopes: ["ArgDef"]
-		},
+			{ 
+				name: "fnName",
+				start: /(?:(\w+):+)?(~?\w+)/,
+				capturedScopesNames: ["fnNamePath", "fnNameBase"]
+			},
+				{ name: "fnNamePath", },
+				{ name: "fnNameBase", },
 
 			{
-				name: "ArgDef",
-				start: /(\b\w[^,\s]*)\s+(\b\w[^,\s\)]*)/,
-				capturedScopesNames: ["typeDef", "fnName"],
+				name: "argDefs",
+				allowedSubScopes: ["argDef"]
 			},
+
+				{
+					name: "argDef",
+					start: /(\b\w[^,\s]*)\s+(\b\w[^,\s\)]*)/,
+					capturedScopesNames: ["typeDef", "varName"],
+				},
+
+					{ name: "varName",},
+
+					// { name: "argName", },
 
 
 		{
@@ -127,14 +166,14 @@ exports.list = [
 			
 		{
 			name: "command",
-			start: /\b(.*?);/,
+			start: /(\S.*?);/,
 			capturedScopesNames: ["statement"]
 		},
 
 			{
 				name: "statement",
 				// start:  /^[\s\S]*$/,
-				allowedSubScopes: ["fnCall", "equal", "bitLeft", "ptr", "string", "num"],
+				allowedSubScopes: ["fnCall", "equal", "bitLeft", "ptr", "string", "num", "delete", "return"],
 			},
 
 				{ name: "operator",},
@@ -144,8 +183,6 @@ exports.list = [
 					start: /(\w+)(\(.*\))/,
 					capturedScopesNames: ["fnName", "args"]
 				},
-
-					{ name: "fnName",},
 
 					{
 						name: "args",
@@ -171,7 +208,7 @@ exports.list = [
 						capturedScopesNames: ["typeDef", "varName"]
 					},	
 
-						{ name: "varName",},
+						
 
 				{
 					name: "bitLeft",
@@ -184,9 +221,67 @@ exports.list = [
 					start:  /^([\s\S]*?)(->)([\s\S]*)$/,
 					capturedScopesNames: ["statement", "operator", "statement"]
 				},
+
+				{
+					name: "delete",
+					start:  /(delete)\s+(\w+)/,
+					capturedScopesNames: ["keyComp", "varName"]
+				},
+				{
+					name: "return",
+					start:  /(return)\s+([\s\S]*)$/,
+					capturedScopesNames: ["keyComp", "statement"]
+				},
 					
 
-	
+	{
+		name: "classDef",
+		start: /\b(class)\s+(\w+)\s*(?::(.*?))?\s*{/,
+		startInclusive: true,
+		end: /\}(?:\s*;)?/,
+		endInclusive: true,
+		capturedScopesNames: ["typeDef", "className", "classInheritance"],
+		allowedSubScopes: ["privacyDef"]
+	},
+
+		{ name: "classKeyword", },
+		{ name: "className", },
+
+		{
+			name: "classInheritance",
+			start: /(public|private|protected)\s+(\w+)/,
+			capturedScopesNames: ["classKeyword", "className"]
+		},
+
+			{
+				name: "privacyDef",
+				start: /(public|private|protected)\s*:/,
+				startInclusive: true,
+				end: /public|private|protected|}/,
+				endInclusive: false,
+				capturedScopesNames: ["classKeyword"],
+				allowedSubScopes: ["classPropertyDef"]
+			},
+
+				{
+					name: "classPropertyDef",
+					start: /([\w~].*?);/,
+					capturedScopesNames: ["classProperty"]
+				},
+
+				{
+					name: "classProperty",
+					start: /(?:(virtual)\s+)?(?:([^\s\(]+)\s+)?(?:(\S+\(.*\))|([^\s\(]+))/,
+					capturedScopesNames: ["classKeyword", "typeDef", "fnCallDef", "varName"],
+				},
+
+					// { 
+					// 	name: "classPropertyFnDef", 
+					// 	start: /([~\w]+)\((.*)\)/,
+					// 	capturedScopesNames: ["fnName", "argDefs"]
+					// },
+
+				
 
 
 
@@ -296,15 +391,15 @@ exports.list = [
 
 	{
 		name: "keyComp",
-		start: Scoperizer.txtListToRegExpString(__dirname+"/compiler_keywords.txt")
+		// start: Scoperizer.txtListToRegExpString(__dirname+"/compiler_keywords.txt")
 	},
 	{
 		name: "keyClass",
-		start: Scoperizer.txtListToRegExpString(__dirname+"/class_keywords.txt")
+		// start: Scoperizer.txtListToRegExpString(__dirname+"/class_keywords.txt")
 	},
 	{
 		name: "keyVar",
-		start: Scoperizer.txtListToRegExpString(__dirname+"/var_keywords.txt")
+		// start: Scoperizer.txtListToRegExpString(__dirname+"/var_keywords.txt")
 	},
 	{
 		name: "num",
@@ -313,6 +408,7 @@ exports.list = [
 	{
 		name: "string",
 		start:  /("|'|`)(?:\\\1|.)*?\1/,
+		capturedScopesNames: -1
 		// start:  /".*"/,
 	},
 

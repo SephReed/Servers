@@ -9,8 +9,6 @@
 class Polygon {
 	public:
 		// Constructor for Polygon.
-		//@width is the width of the polygon.
-		//@height (optional) is the width of the polygon
 		Polygon(int height, int width);
 		// Destructor
 		~Polygon();

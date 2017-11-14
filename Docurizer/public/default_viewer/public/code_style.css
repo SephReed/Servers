@@ -65,16 +65,9 @@ body {
 	classDef:hover, fnDef:hover { /* block:hover, fnDefBlock:hover{*/
 		background-color: rgba(120,120,120,0.05);
 	}
-		classFnDef {
-			color: #ace100;
-		}
-			classFnParams, args {
-				/*color: #f8f8ed;*/
-			}
-
 	
 
-	comment {
+	comment, multilineComment {
 		color: #646e5d;
 		/*color: #f8f8ed;*/
 		/*font-size: 15px;*/
@@ -85,7 +78,7 @@ body {
 		    font-weight: bold;
 		}
 		
-
+	/*Purple*/
 	num {
 		color: #ab82ff;
 	}
@@ -104,6 +97,7 @@ body {
 	keyComp, operator, conditionType {
 		color: #f07;		
 	}
+		/*yellow*/
 		string, include {
 			color: #f4e161;
 		}
@@ -117,18 +111,25 @@ body {
 				text-decoration-color: #f8f8ed;
 			}
 
-		include {
-			color: #d8c963;
-		}
 
-	keyVar, command fnCall > fnName, typeDef {
+	/*Orange*/
+	classKeyword {
+		color: orange
+	}
+
+
+	/*Blue*/
+	fnName, typeDef, compVarName {
 		color: #77d9f1;
 	}
-
-	keyClass {
-		color: #5df;
-	}
-
-		classNameDef, inheritance, fnDef fnName, classfnprivacyblock fnName {
+		/*Green*/
+		classDef > className, 
+		classInheritance > className, 
+		classPropertyFnDef fnName, 
+		fnCallDef fnName
+		{
 			color: #c3ff00;
 		}
+
+
+

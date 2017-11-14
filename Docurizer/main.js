@@ -22,7 +22,7 @@ const cppParser = new Scoperizer.RuleSet(cppScopes);
 const Permeate = require('./libs/Scoperizer/Permeate.js');
 
 
-DOCZ.limitFileCount = 1;
+// DOCZ.limitFileCount = 1;
 DOCZ.filesFound = 0;
 
 
@@ -214,20 +214,6 @@ DOCZ.class.ClassInfo = function(originFile) {
 	THIS.addFile(originFile);
 }
 
-// DOCZ.class.ClassInfo.prototype.getDoc = function() {
-// 	var THIS = this;
-// 	if(THIS.files["c"])
-// 		return THIS.files["c"].getDoc();
-
-// 	else if(THIS.files["cpp"])
-// 		return THIS.files["cpp"].getDoc();
-
-// 	else if(THIS.files["h"])
-// 		return THIS.files["h"].getDoc();
-
-// 	else if(THIS.files["hpp"])
-// 		return THIS.files["hpp"].getDoc();
-// };
 
 
 DOCZ.class.ClassInfo.prototype.addFile = function(file) {
@@ -253,12 +239,14 @@ DOCZ.class.ClassInfo.prototype.mineFiles = function() {
 	if(THIS.files["cpp"]) {
 		var file = THIS.files["cpp"];
 
+		// file.
+
 		var fnDefs = file.scopeChunk.getSubs("fnDef");
 		fnDefs.forEach((fnDef) => {
 			var functionInfo = {};
 			functionInfo.scope = fnDef;
 			
-			var fnNameChunk = fnDef.getFirstSub(">fnDefHeader>fnCall>fnName");
+			var fnNameChunk = fnDef.getFirstSub(">fnCallDef>fnName>fnNameBase");
 			if(fnNameChunk == undefined) {
 				console.error("\nERROR: No name found in fnHeader", fnDef.getRawCode().substr(0, 32));
 				console.error(fnDef.file.nameAndExtension);
@@ -266,12 +254,40 @@ DOCZ.class.ClassInfo.prototype.mineFiles = function() {
 			}
 			functionInfo.name = fnNameChunk.getRawCode();
 
-			var returnType = fnDef.getFirstSub(">fnDefHeader>returnType");
-			functionInfo.headerHtml = `<fnDefHeader>`;
+			var returnType = fnDef.getFirstSub(">typeDef");
+			functionInfo.headerHtml = `<fnCallDef>`;
 			if(returnType)
 				functionInfo.headerHtml += returnType.toHtml() + " ";
-			functionInfo.headerHtml += fnDef.getFirstSub(">fnDefHeader>fnCall").toHtml();
-			functionInfo.headerHtml += `<fnDefHeader>`;
+
+			var argDefsChunk = fnDef.getFirstSub(">fnCallDef>argDefs");
+			if(argDefsChunk == undefined) {
+				console.error("\nERROR: No argDefs found", fnDef.getRawCode().substr(0, 32));
+				console.error(fnDef.file.nameAndExtension);
+				return;
+			}
+
+
+			functionInfo.headerHtml += `<fnName>`+fnNameChunk.toHtml(true)+`</fnName>`+ argDefsChunk.toHtml(true);
+			functionInfo.headerHtml += `<fnCallDef>`;
+
+			functionInfo.args = {};
+			functionInfo.args.byName = {};
+			functionInfo.args.list = [];
+
+			var argDefs = argDefsChunk.subChunksByName["argDef"];
+			if(argDefs) {
+				argDefs.forEach((argDef) => {
+					var addMe = {};
+					addMe.typeDef = argDef.getFirstChildSubOfName("typeDef").getRawCode();
+					addMe.name = argDef.getFirstChildSubOfName("varName").getRawCode();
+
+					functionInfo.args.byName[addMe.name] = addMe;
+					functionInfo.args.list.push(addMe);
+				})
+			}
+			
+
+
 
 			// console.log("START")
 			var preCommentChunks = [];
@@ -297,22 +313,35 @@ DOCZ.class.ClassInfo.prototype.mineFiles = function() {
 				}
 
 				//make sure each comment chunk ends nice
-				if(text.charAt(text.length-1) == '.')
-					text += "<br>";
-				else if(text.charAt(text.length-1) != ' ')
+				// if(text.charAt(text.length-1) == '.')
+				// 	text += "<br>";
+				// else 
+				if(text.charAt(text.length-1) != ' ')
 					text += " ";
 
 				//special cases for comment types
-				if(text.startsWith("breif:"))
-					functionInfo.breifDesc = text.replace(/breif:\s*/i, '');
-				else if(text.startsWith("!!")) {}
+				if(text.match(/\s*breif:/)) {
+					functionInfo.breifDesc = "The <code>"+functionInfo.name+"()</code> function ";
+					functionInfo.breifDesc += text.replace(/breif:\s*/i, '').trim();
+				}
+				else if(text.match(/\s*;/)) {}
 					//do nothing, source code comment only
+				else if(text.match(/\s*@/)) {
+					var match = text.match(/@(\w+)[\s\-]+(.*)/);
+					var name = match[1];
+
+					if(functionInfo.args.byName[name] == undefined)
+						console.error("Can not create description for arg not in function call", match)
+
+					else 
+						functionInfo.args.byName[name].desc = match[2];
+				}
 				else
 					functionInfo.longDesc += text;
 			});
 
 			if(functionInfo.longDesc.length == 0)
-				functionInfo.longDesc = "no description";
+				functionInfo.longDesc = undefined;
 
 			THIS.functions.push(functionInfo);
 		})
@@ -348,14 +377,36 @@ DOCZ.class.ClassInfo.prototype.getDoc = function() {
 
 	THIS.functions.forEach((fn) => {
 		out += `<function>\n`;
-		out += `<fnHeader>`+fn.headerHtml+`</fnHeader>\n`;
+		out += `<fnHeader>`+fn.headerHtml;
+		
+
+		out +=`</fnHeader>\n`;
+
+		
+
+		out += `<info>\n`;
 
 		if(fn.breifDesc)
-			out += `<h2>`+fn.breifDesc+`</h2>\n`;
+			out += `<breif>`+fn.breifDesc+`</breif>\n`;
 
-		out += `<desc>\n`;
-		out += fn.longDesc;
-		out += `</desc>\n`;
+		if(fn.args && fn.args.list.length) {
+			out += `<h3><keyComp>Parameters</keyComp></h3>`;
+			out += `<params>\n`;
+			fn.args.list.forEach((arg) => {
+				out += `<argName><typedef>`+arg.typeDef+`</typedef> `+arg.name+`</argName> - `; 
+				out += (arg.desc||"no description")+`<br>`;
+			});
+			out += `</params>\n`;
+		}
+
+		if(fn.longDesc) {
+			out += `<h3><keyComp>Description</keyComp></h3>`
+			out += `<desc>\n`;
+			out += fn.longDesc;
+			out += `</desc>\n`;
+		}
+
+		out += `</info>\n`;
 
 		out += "<fileLinks>\n";
 		for(var extension in THIS.files) {

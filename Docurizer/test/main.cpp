@@ -27,11 +27,14 @@ someReturnType32 CLASSY:doThing(type1 arg1, int arg2) {
 }
 
 
+"oh /* fuck";
 
 
 // Prints out some details on a Polygon.
 // Note that it's not passing through a particular Polygon (like Triangle or Rectangle), rather it's the parent.
-void printDetails(Polygon* shape) {
+// @shape - does a thing
+// breif: prints a description of a shape
+void printDe/*bitch of a*/tai/*test*/ls(Polygon* shape) {
 	std::cout << "Height: " << shape->getHeight();
 	std::cout << ", Width: " << shape->getWidth();
 

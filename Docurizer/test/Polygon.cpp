@@ -5,35 +5,35 @@
 
 #include "Polygon.hpp"
 
-// Constructor for Polygon.
-//@width is the width of the polygon.
-//@height (optional) is the width of the polygon
+// breif: constructs the Polygon.
+// @width is the width of the polygon.
+// @height (optional) is the width of the polygon
 Polygon::Polygon(int height, int width): m_height(height), m_width(width) {}
 
-// Destructor
+// breif: destroys the object
 Polygon::~Polygon() {}
 
-// Return the polygon height
+// breif: returns the polygon height
 int Polygon::getHeight() {
 	return m_height;
 }
 
-// Return the polygon width
+// breif: returns the polygon width
 int Polygon::getWidth() {
 	return m_width;
 }
 
-// Set the polygon height
+// breif: sets the polygon height
 void Polygon::setHeight(int height) {
 	m_height = height;
 }
 
-// Set the polygon width
+// breif: sets the polygon width
 void Polygon::setWidth(int width) {
 	m_width = width;
 }
 
-// This runs if there is no child class (polymorphism) so we return an invalid area
+// breif: runs if there is no child class (polymorphism) so we return an invalid area
 float Polygon::area() {
 	return -1;
 }

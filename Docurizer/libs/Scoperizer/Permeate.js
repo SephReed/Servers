@@ -48,7 +48,7 @@ exports.syncDepthFirst = function(node, args) {
 			childResults.push(exports.syncDepthFirst(child, args));
 		});
 	}
-	else console.log("Skipping children", THIS.name)
+	// else console.log("Skipping children", THIS.isNonCode)
 
 	return args.postChildrenFn ? args.postChildrenFn(THIS, childResults, state) : undefined;
 }

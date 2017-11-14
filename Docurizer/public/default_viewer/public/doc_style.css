@@ -49,7 +49,7 @@ body {
 	function {
 		display: block;
 		position: relative;
-		margin: 20px 8% 0px 8%;
+		margin: 20px 1% 0px 3%;
 		background-color: #32332d;
 		/*color: #E8EBC8;*/
 		border-radius: 1px;
@@ -64,12 +64,14 @@ body {
 	}
 
 		function > fnHeader{
+			font-family: "DejaVuSansMono", arial;
 			display: block;
 			position: relative;
 			/*background-color: #355450;*/
 			/*background-image: linear-gradient(#c62756, #9d314a);*/
 			background-image: linear-gradient(#464744, #3d3d3b);
-			font-size: 18px;
+			/*font-size: 18px;*/
+			font-size: 17.5px;
 			color: white;
 			margin: 0px;
 			padding: 10px;
@@ -83,27 +85,62 @@ body {
 			box-shadow: 0px 0px 5px rgba(250,250,250,0.2), inset 0px 0px 5px rgba(250,250,250,0.2);*/
 		}
 
-		function > desc {
+		function breif {
+			font-size: 15px;
+			display: block;
+			/*color: orange;	*/
+		}
+
+			function breif > code {
+				font-family: "DejaVuSansMono", arial;
+				/*background-color: #1111114d;*/
+				/*border-bottom:  3px solid #0000001a;*/
+				font-size: 13px;
+				/*padding: 3px;*/
+				/*border-radius: 5px;*/
+			}
+		
+
+		function params argName{
+			font-family: "DejaVuSansMono", arial;
+		}	
+
+
+		function info {
 			display: block;
 			padding: 5px;
 		}
 
-		function > fileLinks {
-			display: block;
-			text-align: right;
-			/*opacity: 0.25;*/
-		}
-			fileLinks > a {
-				color: inherit;
-				opacity: 0.15;
-				text-decoration: none;
+			function info > *:not(:last-child) {
+				margin-bottom: 10px;
 			}
 
-				fileLinks > a:hover {
-					opacity: 1;
-					text-decoration: underline;
-					color: #77d9f1;
+				function info h3 {
+					font-size: 15px;
+					margin: 0px !important;
 				}
+
+			function params, function desc {
+				display: block;
+				padding-left: 10px;
+			}
+
+			function > fileLinks {
+				display: block;
+				text-align: right;
+				/*opacity: 0.25;*/
+			}
+				fileLinks > a {
+					color: inherit;
+					opacity: 0.15;
+					text-decoration: none;
+				}
+
+					fileLinks > a:hover {
+						opacity: 1;
+						text-decoration: underline;
+						color: #77d9f1;
+					}
 
 			/*function:hover fileLinks, function:focus fileLinks {
 				opacity: 1;
