@@ -22,19 +22,17 @@ this_is_a_command; alsoOne;
 
 
 
-someReturnType32 CLASSY:doThing(type1 arg1, int arg2) {
+someReturnType32 CLASSY:doThing(type1 arg1, const int arg2) {
 	doThing();
 }
 
 
-"oh /* fuck";
+"this is not /* a comment";
 
-
-// Prints out some details on a Polygon.
-// Note that it's not passing through a particular Polygon (like Triangle or Rectangle), rather it's the parent.
+// breif: prints out some details on a Polygon.
 // @shape - does a thing
-// breif: prints a description of a shape
-void printDe/*bitch of a*/tai/*test*/ls(Polygon* shape) {
+// Note that it's not passing through a particular Polygon (like Triangle or Rectangle), rather it's the parent.
+void printDe/*very hard*/tai/*test*/ls(Polygon* shape) {
 	std::cout << "Height: " << shape->getHeight();
 	std::cout << ", Width: " << shape->getWidth();
 

@@ -519,6 +519,15 @@
 	},
 	"buffers":
 	[
+		{
+			"file": "/Users/seph/Code/C++/netrunner/src/main.cpp",
+			"settings":
+			{
+				"buffer_size": 7866,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		}
 	],
 	"build_system": "",
 	"build_system_choices":
@@ -560,7 +569,8 @@
 	},
 	"expanded_folders":
 	[
-		"/Users/seph/Code/C++/netrunner"
+		"/Users/seph/Code/C++/netrunner",
+		"/Users/seph/Code/C++/netrunner/src"
 	],
 	"file_history":
 	[
@@ -990,8 +1000,39 @@
 	"groups":
 	[
 		{
+			"selected": 0,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "/Users/seph/Code/C++/netrunner/src/main.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7866,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3188,
+								3188
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
 			]
 		}
 	],

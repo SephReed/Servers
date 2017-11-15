@@ -49,6 +49,17 @@ cppParser.getScope("include").on("complete", function(scopeChunk) {
 	}
 });
 
+cppParser.getScope("include").on("htmlOut", function(scopeChunk, outStrings) {
+	var chunk = scopeChunk.getFirstSub(">string");
+	if(chunk) {
+		var include = chunk.getRawCode().replace(/"/g, '');
+		outStrings.unshift(`<a href="`+include+`.html">`);
+		outStrings.push(`</a>`);
+		// chunk.file.addInclude(include);
+		// scopeChunk.includePath = include;
+	}
+});
+
 
 
 
@@ -274,15 +285,23 @@ DOCZ.class.ClassInfo.prototype.mineFiles = function() {
 			functionInfo.args.byName = {};
 			functionInfo.args.list = [];
 
-			var argDefs = argDefsChunk.subChunksByName["argDef"];
-			if(argDefs) {
-				argDefs.forEach((argDef) => {
-					var addMe = {};
-					addMe.typeDef = argDef.getFirstChildSubOfName("typeDef").getRawCode();
-					addMe.name = argDef.getFirstChildSubOfName("varName").getRawCode();
+			var argDefSpans = argDefsChunk.subChunksByName["argDefSpans"];
+			if(argDefSpans) {
+				argDefSpans.forEach((argDefSpan) => {
+					var typeDefChunk = argDefSpan.getFirstSub(">argDef>typeDef");
+					var varNameChunk = argDefSpan.getFirstSub(">argDef>varName");
 
-					functionInfo.args.byName[addMe.name] = addMe;
-					functionInfo.args.list.push(addMe);
+					if(typeDefChunk != undefined && varNameChunk != undefined) {
+						var addMe = {};
+						addMe.typeDef = typeDefChunk.getRawCode();
+						addMe.name = varNameChunk.getRawCode();
+
+						functionInfo.args.byName[addMe.name] = addMe;
+						functionInfo.args.list.push(addMe);
+					}
+					else {
+						console.error("could not find either argDef>typeDef or argDef>varName in", argDefSpan.toHtml(true));
+					}
 				})
 			}
 			
@@ -327,7 +346,7 @@ DOCZ.class.ClassInfo.prototype.mineFiles = function() {
 				else if(text.match(/\s*;/)) {}
 					//do nothing, source code comment only
 				else if(text.match(/\s*@/)) {
-					var match = text.match(/@(\w+)[\s\-]+(.*)/);
+					var match = text.match(/@(?:param\s*)?(\w+)[\s\-]+(.*)/);
 					var name = match[1];
 
 					if(functionInfo.args.byName[name] == undefined)

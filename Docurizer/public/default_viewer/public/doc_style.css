@@ -103,6 +103,8 @@ body {
 
 		function params argName{
 			font-family: "DejaVuSansMono", arial;
+			padding-bottom: 4px;
+			display: inline-block;
 		}	
 
 

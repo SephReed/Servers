@@ -158,6 +158,8 @@ exports.Scope.prototype.generateNextMatchRegex = function() {
 			scope.nextMatchGroupNums[groupNumOffset] = -1;
 		}
 
+
+		console.log(subsRegexString)
 		if(subsRegexString.length)
 			scope.nextMatchRegex = new RegExp(subsRegexString, 'g');
 	}
@@ -516,12 +518,20 @@ exports.ScopeChunk.prototype.scopify = function(fastMode, depth) {
 			}
 			let matchScope = scope.nextMatchGroupNums[matchNum];
 
-			
+			// !1
 			if(matchScope == -1) { // && scope.end) {
-				subScopesLeft = false;
-				THIS.endIndex = indexOffset + regexMatch.index;
-				if(scope.endInclusive)
-					THIS.endIndex += regexMatch[0].length;
+				//strange case for when a scope end can be met early
+				if(THIS.startMatch && THIS.startMatch.text.length > regexMatch.index) {
+					console.error("CRAZY CASE", regexMatch, THIS.startMatch.text.length, charStart, searchableCode)
+					charStart = regexMatch.index + 1;
+				}
+
+				else {
+					subScopesLeft = false;
+					THIS.endIndex = indexOffset + regexMatch.index;
+					if(scope.endInclusive)
+						THIS.endIndex += regexMatch[0].length;
+				}
 			}
 			else {
 				let matchCaptures;
@@ -530,7 +540,7 @@ exports.ScopeChunk.prototype.scopify = function(fastMode, depth) {
 					matchCaptures.push(regexMatch[matchNum+sm+1]);
 				}
 				
-				var nextScopeInfo = {
+				let nextScopeInfo = {
 					scope: matchScope,
 					startMatch: {
 						text: regexMatch[0],
@@ -541,18 +551,20 @@ exports.ScopeChunk.prototype.scopify = function(fastMode, depth) {
 				if(matchCaptures)
 					nextScopeInfo.matchCaptures = matchCaptures;
 
-				var startIndex = regexMatch.index;
-				if(matchScope.startInclusive != true)
-					startIndex += regexMatch[0].length;
-
 				var outcome = THIS.spawnSubChunk(nextScopeInfo);
+				if(outcome == undefined)
+					console.error("Chunk failed to be spawned", nextScopeInfo, "in", scope.name);
+
 				outcome.scopify();
-				charStart = (outcome.endIndex - indexOffset);
+				if(outcome.endIndex === undefined || outcome.endIndex < nextScopeInfo.startMatch.index)
+					console.error("Chunk returing bad end index '", outcome.endIndex, "' of", outcome.scope.name, "in", scope.name, "at", nextScopeInfo.startMatch.index);
+
+				charStart = (outcome.endIndex - indexOffset);					
 			}
 		}
 	}
 	
-	if(THIS.endIndex == -1) {
+	if(THIS.endIndex === undefined) {
 		console.error("unset endIndex: defaulting to charLimit")
 		THIS.endIndex = THIS.getCharLimit();	
 	}
@@ -664,8 +676,11 @@ exports.ScopeChunk.prototype.spawnSubChunk = function(scopeInfoOrChunk, isChunk)
 		else return targetChunk.spawnSubChunk(addMe, true);
 	}
 
-	console.error("can not insert chunk which overlaps other chunk boundaries", ptr.startIndex, ptr.endIndex, addMe.startIndex, addMe.endIndex);
-	
+	// console.error(addMe)
+	console.error("can not insert chunk which overlaps other chunk boundaries")
+	console.error(targetChunk.scope.name+` [`+targetChunk.startIndex+`, `+targetChunk.endIndex+`]`);
+	console.error(addMe.scope.name+` [`+addMe.startIndex+`, `+addMe.endIndex+`]`);
+	return undefined;
 }
 
 
